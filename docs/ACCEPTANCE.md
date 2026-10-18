@@ -2,6 +2,9 @@
 
 Date: 2026-10-18.
 
+Current publication status: 0.1.0 is now published and independently installed;
+see [REGISTRY_RELEASE.md](REGISTRY_RELEASE.md). The snapshot below predates login.
+
 Verified commit: 54e4388.
 
 Successful GitHub workflow:
