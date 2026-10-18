@@ -1,5 +1,5 @@
 ///|
-fn property_width(code : Int) -> Int {
+fn property_width(code : Int32) -> Int32 {
   match code {
     0 | 1 | 2 => 1
     3 | 4 => 2
@@ -12,10 +12,10 @@ fn property_width(code : Int) -> Int {
 ///|
 fn read_property(
   data : Bytes,
-  at : Int,
-  code : Int,
+  at : Int32,
+  code : Int32,
   limits : Limits,
-) -> (Property, Int) raise FgbError {
+) -> (Property, Int32) raise FgbError {
   let width = property_width(code)
   if width > 0 {
     require_range(data, at, width)
@@ -69,7 +69,7 @@ fn read_property(
 pub fn decode_properties(
   data : Bytes,
   columns : Array[Column],
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Array[Property] raise FgbError {
   limits.validate()
   enforce(columns.length(), limits.max_columns, "column count")
@@ -152,7 +152,7 @@ fn real_value(value : Property) -> Double raise FgbError {
 fn write_property(
   writer : ByteWriter,
   value : Property,
-  code : Int,
+  code : Int32,
   limits : Limits,
 ) -> Unit raise FgbError {
   match code {
@@ -218,7 +218,7 @@ fn write_property(
 pub fn encode_properties(
   values : Array[Property],
   columns : Array[Column],
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Bytes raise FgbError {
   limits.validate()
   enforce(columns.length(), limits.max_columns, "column count")

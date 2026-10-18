@@ -26,7 +26,7 @@ async function main(){
   const bounds={min_x:100,min_y:0,max_x:110,max_y:6};
   try{
     const result=await queryRemote(url,bounds);
-    assert.equal(result.data.features.length,11);
+    assert.equal(JSON.parse(result.geojson).features.length,11);
     assert.equal(result.stats.features_decoded,11);
     assert.ok(result.stats.received_bytes<bytes.length/4);
     assert.ok(requests.slice(1).every(r=>r.match==='"fixture-v1"'));

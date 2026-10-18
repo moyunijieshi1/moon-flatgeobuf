@@ -10,7 +10,11 @@ pub fn validate_magic(data : Bytes) -> Unit raise FgbError {
 }
 
 ///|
-fn sized_payload(data : Bytes, at : Int, limit : Int) -> Bytes raise FgbError {
+fn sized_payload(
+  data : Bytes,
+  at : Int32,
+  limit : Int32,
+) -> Bytes raise FgbError {
   let size = size32(data, at)
   enforce(size, limit, "size-prefixed buffer")
   if size < 4 {
@@ -22,7 +26,7 @@ fn sized_payload(data : Bytes, at : Int, limit : Int) -> Bytes raise FgbError {
 ///|
 fn read_column(
   data : Bytes,
-  at : Int,
+  at : Int32,
   limits : Limits,
 ) -> Column raise FgbError {
   let t = TableView::open(data, at)
@@ -50,7 +54,7 @@ fn read_column(
 }
 
 ///|
-fn read_crs(data : Bytes, at : Int, limits : Limits) -> Crs raise FgbError {
+fn read_crs(data : Bytes, at : Int32, limits : Limits) -> Crs raise FgbError {
   let t = TableView::open(data, at)
   {
     org: t.text(0, limits),
@@ -65,7 +69,7 @@ fn read_crs(data : Bytes, at : Int, limits : Limits) -> Crs raise FgbError {
 ///|
 pub fn decode_header(
   data : Bytes,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Header raise FgbError {
   limits.validate()
   let payload = sized_payload(data, 0, limits.max_header_bytes)
@@ -130,7 +134,7 @@ pub fn decode_header(
 }
 
 ///|
-fn write_column(b : FbBuilder, column : Column) -> Int {
+fn write_column(b : FbBuilder, column : Column) -> Int32 {
   let table = b.table(11)
   b.text(table, 0, column.name)
   b.scalar(table, 1, column.type_code)
@@ -153,7 +157,7 @@ fn write_column(b : FbBuilder, column : Column) -> Int {
 }
 
 ///|
-fn write_crs(b : FbBuilder, crs : Crs) -> Int {
+fn write_crs(b : FbBuilder, crs : Crs) -> Int32 {
   let table = b.table(6)
   b.text(table, 0, crs.org)
   b.scalar(table, 1, crs.code)
@@ -167,7 +171,7 @@ fn write_crs(b : FbBuilder, crs : Crs) -> Int {
 ///|
 pub fn encode_header(
   header : Header,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Bytes raise FgbError {
   limits.validate()
   validate_header(header, limits~)
@@ -213,7 +217,7 @@ pub fn encode_header(
 ///|
 pub fn validate_header(
   header : Header,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Unit raise FgbError {
   if header.features_count < 0 ||
     header.index_node_size < 0 ||

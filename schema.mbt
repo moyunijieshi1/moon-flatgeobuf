@@ -1,5 +1,5 @@
 ///|
-fn inferred_type(value : Json) -> Int raise FgbError {
+fn inferred_type(value : Json) -> Int32 raise FgbError {
   match value {
     Null => -1
     True | False => 2
@@ -42,7 +42,7 @@ fn inferred_type(value : Json) -> Int raise FgbError {
 }
 
 ///|
-fn unify_types(left : Int, right : Int) -> Int raise FgbError {
+fn unify_types(left : Int32, right : Int32) -> Int32 raise FgbError {
   if left == -1 {
     return right
   }
@@ -61,8 +61,8 @@ fn unify_types(left : Int, right : Int) -> Int raise FgbError {
 ///|
 pub fn infer_geojson_header(
   value : Json,
-  name? : String = "",
-  limits? : Limits = Limits::default(),
+  name~ : String = "",
+  limits~ : Limits = Limits::default(),
 ) -> Header raise FgbError {
   limits.validate()
   if json_text(json_field(value, "type")) != "FeatureCollection" {
@@ -70,8 +70,8 @@ pub fn infer_geojson_header(
   }
   let features = json_array(json_field(value, "features"))
   enforce(features.length(), limits.max_features, "GeoJSON features")
-  let types : Map[String, Int] = Map([])
-  let present : Map[String, Int] = Map([])
+  let types : Map[String, Int32] = Map([])
+  let present : Map[String, Int32] = Map([])
   let nullable : Map[String, Bool] = Map([])
   let mut geometry_kind = Unknown
   let mut geometry_seen = false
@@ -115,6 +115,25 @@ pub fn infer_geojson_header(
     }
     enforce(types.length(), limits.max_columns, "inferred columns")
   }
+  // Inferred Double must not silently round a large integer from another row.
+  for feature in features {
+    match json_field(feature, "properties") {
+      Object(fields) =>
+        for key, value in fields {
+          if types.get(key) == Some(10) {
+            match value {
+              Number(n, ..) if n == @math.floor(n) &&
+                (n < -9007199254740991.0 || n > 9007199254740991.0) =>
+                raise InvalidArgument(
+                  "mixed decimal and large integer values need an explicit schema",
+                )
+              _ => ()
+            }
+          }
+        }
+      _ => ()
+    }
+  }
   let names : Array[String] = []
   for key, _ in types {
     names.push(key)
@@ -146,8 +165,8 @@ pub fn infer_geojson_header(
 ///|
 pub fn import_geojson(
   value : Json,
-  name? : String = "",
-  limits? : Limits = Limits::default(),
+  name~ : String = "",
+  limits~ : Limits = Limits::default(),
 ) -> Dataset raise FgbError {
   let header = infer_geojson_header(value, name~, limits~)
   dataset_from_geojson(value, header, limits~)

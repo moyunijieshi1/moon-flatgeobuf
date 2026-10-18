@@ -1,5 +1,5 @@
 ///|
-fn sample_dataset(count : Int) -> Dataset {
+fn sample_dataset(count : Int32) -> Dataset {
   {
     header: Header::new(Point, [Column::new("id", 5)]),
     features: Array::makei(count, i => {

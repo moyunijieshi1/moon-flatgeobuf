@@ -1,6 +1,6 @@
 ///|
 pub(all) struct WriteOptions {
-  index_node_size : Int
+  index_node_size : Int32
   hilbert_sort : Bool
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
@@ -10,7 +10,7 @@ pub fn WriteOptions::default() -> WriteOptions {
 }
 
 ///|
-fn hilbert_key(x_ : Int, y_ : Int) -> Int64 {
+fn hilbert_key(x_ : Int32, y_ : Int32) -> Int64 {
   let mut x = x_
   let mut y = y_
   let mut distance = 0L
@@ -39,7 +39,7 @@ fn normalized_center(
   maximum : Double,
   extent_min : Double,
   extent_max : Double,
-) -> Int {
+) -> Int32 {
   // Half-scaled differences avoid overflowing on large finite coordinates.
   let width = extent_max / 2.0 - extent_min / 2.0
   if width <= 0.0 {
@@ -61,7 +61,7 @@ fn sorted_features(
   features : Array[Feature],
   extent : Bounds,
 ) -> Array[Feature] raise FgbError {
-  let keys : Array[(Int64, Int, Feature)] = []
+  let keys : Array[(Int64, Int32, Feature)] = []
   for i in 0..<features.length() {
     guard features[i].bounds() is Some(b) else {
       raise InvalidArgument("indexed files cannot contain null geometries")
@@ -84,8 +84,8 @@ fn sorted_features(
 ///|
 fn build_index(
   features : Array[Feature],
-  offsets : Array[Int],
-  node_size : Int,
+  offsets : Array[Int32],
+  node_size : Int32,
   limits : Limits,
 ) -> Bytes raise FgbError {
   let levels = index_levels(features.length(), node_size, limits~)
@@ -150,8 +150,8 @@ pub fn dataset_bounds(features : Array[Feature]) -> Bounds? {
 ///|
 pub fn write_dataset(
   dataset : Dataset,
-  options? : WriteOptions = WriteOptions::default(),
-  limits? : Limits = Limits::default(),
+  options~ : WriteOptions = WriteOptions::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Bytes raise FgbError {
   limits.validate()
   if options.index_node_size < 0 ||
@@ -189,7 +189,7 @@ pub fn write_dataset(
   }
   let header_bytes = encode_header(header, limits~)
   let records : Array[Bytes] = []
-  let offsets : Array[Int] = []
+  let offsets : Array[Int32] = []
   let mut feature_bytes = 0
   for feature in features {
     let record = encode_feature(feature, header, limits~)

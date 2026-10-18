@@ -1,4 +1,27 @@
 ///|
+test "integer-valued decimal notation imports without loss" {
+  let input = @json.parse(
+    (
+      #|{"type":"FeatureCollection","features":[{"type":"Feature","geometry":null,"properties":{"id":1.0}}]}
+    ),
+  )
+  assert_eq(import_geojson(input).features[0].properties, [Integer(1L)])
+  let mixed = @json.parse(
+    (
+      #|{"type":"FeatureCollection","features":[{"type":"Feature","geometry":null,"properties":{"n":9223372036854775807}},{"type":"Feature","geometry":null,"properties":{"n":0.5}}]}
+    ),
+  )
+  assert_true(
+    try {
+      import_geojson(mixed) |> ignore
+      false
+    } catch {
+      _ => true
+    },
+  )
+}
+
+///|
 test "GeoJSON schema inference preserves nulls Unicode and exact integers" {
   let input = @json.parse(
     (

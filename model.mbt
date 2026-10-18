@@ -63,7 +63,7 @@ pub(all) enum GeometryKind {
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-pub fn GeometryKind::code(self : GeometryKind) -> Int {
+pub fn GeometryKind::code(self : GeometryKind) -> Int32 {
   match self {
     Unknown => 0
     Point => 1
@@ -89,7 +89,7 @@ pub fn GeometryKind::name(self : GeometryKind) -> String {
 }
 
 ///|
-fn kind_from_code(code : Int) -> GeometryKind raise FgbError {
+fn kind_from_code(code : Int32) -> GeometryKind raise FgbError {
   match code {
     0 => Unknown
     1 => Point
@@ -106,7 +106,7 @@ fn kind_from_code(code : Int) -> GeometryKind raise FgbError {
 pub(all) struct Geometry {
   kind : GeometryKind
   xy : Array[Coordinate]
-  ends : Array[Int]
+  ends : Array[Int32]
   parts : Array[Geometry]
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
@@ -118,13 +118,13 @@ pub fn Geometry::point(x : Double, y : Double) -> Geometry {
 ///|
 pub(all) struct Column {
   name : String
-  type_code : Int
+  type_code : Int32
   nullable : Bool
   title : String
   description : String
-  width : Int
-  precision : Int
-  scale : Int
+  width : Int32
+  precision : Int32
+  scale : Int32
   unique : Bool
   primary_key : Bool
   metadata : String
@@ -133,8 +133,8 @@ pub(all) struct Column {
 ///|
 pub fn Column::new(
   name : String,
-  type_code : Int,
-  nullable? : Bool = true,
+  type_code : Int32,
+  nullable~ : Bool = true,
 ) -> Column {
   {
     name,
@@ -187,7 +187,7 @@ pub(all) enum Property {
 ///|
 pub(all) struct Crs {
   org : String
-  code : Int
+  code : Int32
   name : String
   description : String
   wkt : String
@@ -195,7 +195,7 @@ pub(all) struct Crs {
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-pub fn Crs::epsg(code : Int) -> Crs {
+pub fn Crs::epsg(code : Int32) -> Crs {
   { org: "EPSG", code, name: "", description: "", wkt: "", code_string: "", }
 }
 
@@ -204,8 +204,8 @@ pub(all) struct Header {
   name : String
   geometry_kind : GeometryKind
   columns : Array[Column]
-  features_count : Int
-  index_node_size : Int
+  features_count : Int32
+  index_node_size : Int32
   envelope : Bounds?
   crs : Crs?
   title : String

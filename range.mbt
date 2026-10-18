@@ -1,11 +1,11 @@
 ///|
 pub(all) struct ByteRange {
-  start : Int
-  length : Int
+  start : Int32
+  length : Int32
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-pub fn ByteRange::end_inclusive(self : ByteRange) -> Int raise FgbError {
+pub fn ByteRange::end_inclusive(self : ByteRange) -> Int32 raise FgbError {
   if self.length < 1 {
     raise InvalidArgument("range length must be positive")
   }
@@ -19,13 +19,13 @@ pub fn ByteRange::http_header(self : ByteRange) -> String raise FgbError {
 
 ///|
 pub(all) struct ContentRange {
-  start : Int
-  end_inclusive : Int
-  total : Int
+  start : Int32
+  end_inclusive : Int32
+  total : Int32
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-fn decimal_size(text : String) -> Int raise FgbError {
+fn decimal_size(text : String) -> Int32 raise FgbError {
   if text.is_empty() {
     raise InvalidArgument("empty decimal size")
   }
@@ -64,7 +64,7 @@ pub fn parse_content_range(text : String) -> ContentRange raise FgbError {
 
 ///|
 pub(all) struct RangeResponse {
-  status : Int
+  status : Int32
   content_range : String
   etag : String
   body : Bytes
@@ -72,21 +72,21 @@ pub(all) struct RangeResponse {
 
 ///|
 pub(all) struct TransferStats {
-  requests : Int
-  received_bytes : Int
-  index_nodes : Int
-  features_decoded : Int
-  candidates : Int
-  matched : Int
+  requests : Int32
+  received_bytes : Int32
+  index_nodes : Int32
+  features_decoded : Int32
+  candidates : Int32
+  matched : Int32
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 enum QueryStep {
   Prefix
-  HeaderBlock(Int)
-  IndexBlock(Int, Int, Int)
+  HeaderBlock(Int32)
+  IndexBlock(Int32, Int32, Int32)
   FeatureSize(IndexHit)
-  FeatureBlock(IndexHit, Int)
+  FeatureBlock(IndexHit, Int32)
   Complete
   Failed
 }
@@ -96,16 +96,16 @@ pub struct RangeQuery {
   bounds : Bounds
   limits : Limits
   mut header_ : Header?
-  mut total : Int
+  mut total : Int32
   mut etag : String
   mut step : QueryStep
-  mut index_start : Int
-  mut features_start : Int
+  mut index_start : Int32
+  mut features_start : Int32
   mut levels : Array[IndexLevel]
-  pending : Array[(Int, Int, Int)]
-  mut pending_cursor : Int
+  pending : Array[(Int32, Int32, Int32)]
+  mut pending_cursor : Int32
   hits : Array[IndexHit]
-  mut hit_cursor : Int
+  mut hit_cursor : Int32
   features : Array[Feature]
   mut stats_ : TransferStats
 }
@@ -113,7 +113,7 @@ pub struct RangeQuery {
 ///|
 pub fn RangeQuery::new(
   bounds : Bounds,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> RangeQuery raise FgbError {
   bounds.validate()
   limits.validate()

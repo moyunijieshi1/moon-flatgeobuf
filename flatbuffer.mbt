@@ -1,14 +1,14 @@
 ///|
 priv struct TableView {
   data : Bytes
-  position : Int
-  vtable : Int
-  fields : Int
-  size : Int
+  position : Int32
+  vtable : Int32
+  fields : Int32
+  size : Int32
 }
 
 ///|
-fn TableView::open(data : Bytes, position : Int) -> TableView raise FgbError {
+fn TableView::open(data : Bytes, position : Int32) -> TableView raise FgbError {
   require_range(data, position, 4)
   let distance = i32(data, position)
   let wide = position.to_int64() - distance.to_int64()
@@ -38,9 +38,9 @@ fn TableView::root(data : Bytes) -> TableView raise FgbError {
 ///|
 fn TableView::field(
   self : TableView,
-  id : Int,
-  width : Int,
-) -> Int raise FgbError {
+  id : Int32,
+  width : Int32,
+) -> Int32 raise FgbError {
   if id >= self.fields {
     return 0
   }
@@ -57,9 +57,9 @@ fn TableView::field(
 ///|
 fn TableView::byte(
   self : TableView,
-  id : Int,
-  fallback? : Int = 0,
-) -> Int raise FgbError {
+  id : Int32,
+  fallback~ : Int32 = 0,
+) -> Int32 raise FgbError {
   let at = self.field(id, 1)
   if at == 0 {
     fallback
@@ -71,9 +71,9 @@ fn TableView::byte(
 ///|
 fn TableView::short(
   self : TableView,
-  id : Int,
-  fallback? : Int = 0,
-) -> Int raise FgbError {
+  id : Int32,
+  fallback~ : Int32 = 0,
+) -> Int32 raise FgbError {
   let at = self.field(id, 2)
   if at == 0 {
     fallback
@@ -85,9 +85,9 @@ fn TableView::short(
 ///|
 fn TableView::int(
   self : TableView,
-  id : Int,
-  fallback? : Int = 0,
-) -> Int raise FgbError {
+  id : Int32,
+  fallback~ : Int32 = 0,
+) -> Int32 raise FgbError {
   let at = self.field(id, 4)
   if at == 0 {
     fallback
@@ -97,7 +97,7 @@ fn TableView::int(
 }
 
 ///|
-fn TableView::count(self : TableView, id : Int) -> Int raise FgbError {
+fn TableView::count(self : TableView, id : Int32) -> Int32 raise FgbError {
   let at = self.field(id, 8)
   if at == 0 {
     0
@@ -107,7 +107,7 @@ fn TableView::count(self : TableView, id : Int) -> Int raise FgbError {
 }
 
 ///|
-fn indirect(data : Bytes, at : Int) -> Int raise FgbError {
+fn indirect(data : Bytes, at : Int32) -> Int32 raise FgbError {
   let delta = size32(data, at)
   if delta < 4 {
     raise InvalidData(at, "invalid forward reference")
@@ -118,7 +118,7 @@ fn indirect(data : Bytes, at : Int) -> Int raise FgbError {
 }
 
 ///|
-fn TableView::reference(self : TableView, id : Int) -> Int raise FgbError {
+fn TableView::reference(self : TableView, id : Int32) -> Int32 raise FgbError {
   let at = self.field(id, 4)
   if at == 0 {
     0
@@ -128,7 +128,7 @@ fn TableView::reference(self : TableView, id : Int) -> Int raise FgbError {
 }
 
 ///|
-fn text_at(data : Bytes, at : Int, limits : Limits) -> String raise FgbError {
+fn text_at(data : Bytes, at : Int32, limits : Limits) -> String raise FgbError {
   let size = size32(data, at)
   let start = checked_add(at, 4)
   require_range(data, start, checked_add(size, 1))
@@ -141,7 +141,7 @@ fn text_at(data : Bytes, at : Int, limits : Limits) -> String raise FgbError {
 ///|
 fn TableView::text(
   self : TableView,
-  id : Int,
+  id : Int32,
   limits : Limits,
 ) -> String raise FgbError {
   let at = self.reference(id)
@@ -155,10 +155,10 @@ fn TableView::text(
 ///|
 fn TableView::vector(
   self : TableView,
-  id : Int,
-  width : Int,
-  limit : Int,
-) -> (Int, Int) raise FgbError {
+  id : Int32,
+  width : Int32,
+  limit : Int32,
+) -> (Int32, Int32) raise FgbError {
   let at = self.reference(id)
   if at == 0 {
     return (0, 0)
@@ -184,7 +184,7 @@ fn FbBuilder::new() -> FbBuilder {
 }
 
 ///|
-fn FbBuilder::table(self : FbBuilder, fields : Int) -> Int {
+fn FbBuilder::table(self : FbBuilder, fields : Int32) -> Int32 {
   self.writer.align(2)
   let vt = self.writer.position()
   self.writer.short(4 + 2 * fields)
@@ -198,7 +198,7 @@ fn FbBuilder::table(self : FbBuilder, fields : Int) -> Int {
 }
 
 ///|
-fn FbBuilder::slot(self : FbBuilder, table : Int, field : Int) -> Int {
+fn FbBuilder::slot(self : FbBuilder, table : Int32, field : Int32) -> Int32 {
   let at = table + 8 + field * 8
   let distance = self.writer.data[table].to_int() |
     (self.writer.data[table + 1].to_int() << 8) |
@@ -211,9 +211,9 @@ fn FbBuilder::slot(self : FbBuilder, table : Int, field : Int) -> Int {
 ///|
 fn FbBuilder::scalar(
   self : FbBuilder,
-  table : Int,
-  field : Int,
-  value : Int,
+  table : Int32,
+  field : Int32,
+  value : Int32,
 ) -> Unit {
   let at = self.slot(table, field)
   self.writer.patch_word(at, value)
@@ -222,9 +222,9 @@ fn FbBuilder::scalar(
 ///|
 fn FbBuilder::long(
   self : FbBuilder,
-  table : Int,
-  field : Int,
-  value : Int,
+  table : Int32,
+  field : Int32,
+  value : Int32,
 ) -> Unit {
   let at = self.slot(table, field)
   self.writer.patch_long(at, value.to_uint64())
@@ -233,9 +233,9 @@ fn FbBuilder::long(
 ///|
 fn FbBuilder::reference(
   self : FbBuilder,
-  table : Int,
-  field : Int,
-  target : Int,
+  table : Int32,
+  field : Int32,
+  target : Int32,
 ) -> Unit {
   let at = self.slot(table, field)
   self.writer.patch_word(at, target - at)
@@ -244,8 +244,8 @@ fn FbBuilder::reference(
 ///|
 fn FbBuilder::text(
   self : FbBuilder,
-  table : Int,
-  field : Int,
+  table : Int32,
+  field : Int32,
   text : String,
 ) -> Unit {
   self.writer.align(4)
@@ -258,7 +258,7 @@ fn FbBuilder::text(
 }
 
 ///|
-fn FbBuilder::vector(self : FbBuilder, count : Int, width : Int) -> Int {
+fn FbBuilder::vector(self : FbBuilder, count : Int32, width : Int32) -> Int32 {
   self.writer.align(if width == 8 { 8 } else { 4 }, bias=4)
   let at = self.writer.position()
   self.writer.word(count.reinterpret_as_uint())
@@ -266,7 +266,7 @@ fn FbBuilder::vector(self : FbBuilder, count : Int, width : Int) -> Int {
 }
 
 ///|
-fn FbBuilder::finish(self : FbBuilder, root : Int) -> Bytes {
+fn FbBuilder::finish(self : FbBuilder, root : Int32) -> Bytes {
   self.writer.align(8)
   self.writer.patch_word(4, root - 4)
   self.writer.patch_word(0, self.writer.position() - 4)

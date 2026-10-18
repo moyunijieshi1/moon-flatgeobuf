@@ -22,5 +22,6 @@ jobs:
       - run: npm ci --ignore-scripts
       - run: node scripts/interop.cjs
       - run: node scripts/http-test.cjs
+      - run: node scripts/malformed.cjs
       - run: python3 scripts/count-lines.py
       - run: moon info && git diff --exit-code -- '*.mbti'

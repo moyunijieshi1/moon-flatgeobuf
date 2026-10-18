@@ -1,10 +1,10 @@
 ///|
 enum DecodeStage {
   MagicPrefix
-  HeaderPayload(Int)
-  SkipIndex(Int)
+  HeaderPayload(Int32)
+  SkipIndex(Int32)
   RecordPrefix
-  RecordPayload(Int)
+  RecordPayload(Int32)
 }
 
 ///|
@@ -13,16 +13,16 @@ pub struct StreamDecoder {
   mut stage : DecodeStage
   mut buffer : ByteWriter
   mut header_ : Header?
-  mut total_received : Int
-  mut ordinal : Int
-  mut feature_offset : Int
+  mut total_received : Int32
+  mut ordinal : Int32
+  mut feature_offset : Int32
   mut closed : Bool
   mut failed : Bool
 }
 
 ///|
 pub fn StreamDecoder::new(
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> StreamDecoder raise FgbError {
   limits.validate()
   {
@@ -44,12 +44,12 @@ pub fn StreamDecoder::header(self : StreamDecoder) -> Header? {
 }
 
 ///|
-pub fn StreamDecoder::buffered_bytes(self : StreamDecoder) -> Int {
+pub fn StreamDecoder::buffered_bytes(self : StreamDecoder) -> Int32 {
   self.buffer.position()
 }
 
 ///|
-pub fn StreamDecoder::features_decoded(self : StreamDecoder) -> Int {
+pub fn StreamDecoder::features_decoded(self : StreamDecoder) -> Int32 {
   self.ordinal
 }
 
@@ -59,7 +59,7 @@ pub fn StreamDecoder::is_failed(self : StreamDecoder) -> Bool {
 }
 
 ///|
-fn StreamDecoder::target(self : StreamDecoder) -> Int {
+fn StreamDecoder::target(self : StreamDecoder) -> Int32 {
   match self.stage {
     MagicPrefix => 12
     HeaderPayload(size) => size + 4
@@ -219,14 +219,14 @@ pub struct StreamWriter {
   limits : Limits
   mut started : Bool
   mut closed : Bool
-  mut feature_count : Int
-  mut total_bytes : Int
+  mut feature_count : Int32
+  mut total_bytes : Int32
 }
 
 ///|
 pub fn StreamWriter::new(
   header : Header,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> StreamWriter raise FgbError {
   limits.validate()
   let header = {
@@ -290,11 +290,11 @@ pub fn StreamWriter::finish(self : StreamWriter) -> Unit raise FgbError {
 }
 
 ///|
-pub fn StreamWriter::features_written(self : StreamWriter) -> Int {
+pub fn StreamWriter::features_written(self : StreamWriter) -> Int32 {
   self.feature_count
 }
 
 ///|
-pub fn StreamWriter::bytes_written(self : StreamWriter) -> Int {
+pub fn StreamWriter::bytes_written(self : StreamWriter) -> Int32 {
   self.total_bytes
 }

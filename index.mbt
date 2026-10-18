@@ -1,26 +1,26 @@
 ///|
 pub(all) struct IndexLevel {
-  start : Int
-  end : Int
+  start : Int32
+  end : Int32
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub(all) struct IndexNode {
   bounds : Bounds
-  offset : Int
+  offset : Int32
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub(all) struct IndexHit {
-  ordinal : Int
-  offset : Int
+  ordinal : Int32
+  offset : Int32
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub fn index_levels(
-  count : Int,
-  node_size : Int,
-  limits? : Limits = Limits::default(),
+  count : Int32,
+  node_size : Int32,
+  limits~ : Limits = Limits::default(),
 ) -> Array[IndexLevel] raise FgbError {
   if count < 1 || node_size < 2 || node_size > 65535 {
     raise InvalidArgument(
@@ -52,10 +52,10 @@ pub fn index_levels(
 
 ///|
 pub fn index_byte_length(
-  count : Int,
-  node_size : Int,
-  limits? : Limits = Limits::default(),
-) -> Int raise FgbError {
+  count : Int32,
+  node_size : Int32,
+  limits~ : Limits = Limits::default(),
+) -> Int32 raise FgbError {
   if node_size == 0 {
     return 0
   }
@@ -64,7 +64,10 @@ pub fn index_byte_length(
 }
 
 ///|
-pub fn decode_index_node(data : Bytes, node : Int) -> IndexNode raise FgbError {
+pub fn decode_index_node(
+  data : Bytes,
+  node : Int32,
+) -> IndexNode raise FgbError {
   let at = checked_mul(node, 40)
   require_range(data, at, 40)
   let bounds : Bounds = {
@@ -80,10 +83,10 @@ pub fn decode_index_node(data : Bytes, node : Int) -> IndexNode raise FgbError {
 ///|
 pub fn query_index(
   data : Bytes,
-  count : Int,
-  node_size : Int,
+  count : Int32,
+  node_size : Int32,
   query : Bounds,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Array[IndexHit] raise FgbError {
   query.validate()
   let levels = index_levels(count, node_size, limits~)
@@ -91,7 +94,7 @@ pub fn query_index(
   if data.length() != size {
     raise InvalidData(0, "index byte length differs from header")
   }
-  let pending : Array[(Int, Int)] = [(0, levels.length() - 1)]
+  let pending : Array[(Int32, Int32)] = [(0, levels.length() - 1)]
   let hits : Array[IndexHit] = []
   let mut cursor = 0
   while cursor < pending.length() {
@@ -135,10 +138,10 @@ pub fn query_index(
 ///|
 pub fn validate_index(
   data : Bytes,
-  count : Int,
-  node_size : Int,
-  feature_bytes : Int,
-  limits? : Limits = Limits::default(),
+  count : Int32,
+  node_size : Int32,
+  feature_bytes : Int32,
+  limits~ : Limits = Limits::default(),
 ) -> Unit raise FgbError {
   let levels = index_levels(count, node_size, limits~)
   let expected_bytes = checked_mul(levels[0].end, 40)

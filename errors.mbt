@@ -1,6 +1,6 @@
 ///|
 pub suberror FgbError {
-  InvalidData(Int, String)
+  InvalidData(Int32, String)
   Unsupported(String)
   LimitExceeded(String)
   InvalidArgument(String)
@@ -8,15 +8,15 @@ pub suberror FgbError {
 
 ///|
 pub(all) struct Limits {
-  max_header_bytes : Int
-  max_feature_bytes : Int
-  max_features : Int
-  max_columns : Int
-  max_coordinates : Int
-  max_string_bytes : Int
-  max_depth : Int
-  max_index_nodes : Int
-  max_file_bytes : Int
+  max_header_bytes : Int32
+  max_feature_bytes : Int32
+  max_features : Int32
+  max_columns : Int32
+  max_coordinates : Int32
+  max_string_bytes : Int32
+  max_depth : Int32
+  max_index_nodes : Int32
+  max_file_bytes : Int32
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
@@ -57,7 +57,11 @@ pub fn Limits::validate(self : Limits) -> Unit raise FgbError {
 }
 
 ///|
-fn require_range(data : Bytes, offset : Int, size : Int) -> Unit raise FgbError {
+fn require_range(
+  data : Bytes,
+  offset : Int32,
+  size : Int32,
+) -> Unit raise FgbError {
   if offset < 0 ||
     size < 0 ||
     offset > data.length() ||
@@ -67,7 +71,7 @@ fn require_range(data : Bytes, offset : Int, size : Int) -> Unit raise FgbError 
 }
 
 ///|
-fn checked_add(a : Int, b : Int) -> Int raise FgbError {
+fn checked_add(a : Int32, b : Int32) -> Int32 raise FgbError {
   if a < 0 || b < 0 || a > 2147483647 - b {
     raise InvalidData(a, "offset addition overflow")
   }
@@ -75,7 +79,7 @@ fn checked_add(a : Int, b : Int) -> Int raise FgbError {
 }
 
 ///|
-fn checked_mul(a : Int, b : Int) -> Int raise FgbError {
+fn checked_mul(a : Int32, b : Int32) -> Int32 raise FgbError {
   if a < 0 || b < 0 || (b != 0 && a > 2147483647 / b) {
     raise InvalidData(a, "size multiplication overflow")
   }
@@ -83,7 +87,7 @@ fn checked_mul(a : Int, b : Int) -> Int raise FgbError {
 }
 
 ///|
-fn enforce(value : Int, limit : Int, name : String) -> Unit raise FgbError {
+fn enforce(value : Int32, limit : Int32, name : String) -> Unit raise FgbError {
   if value > limit {
     raise LimitExceeded(name)
   }

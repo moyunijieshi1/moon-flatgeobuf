@@ -2,7 +2,7 @@
 pub fn decode_feature(
   data : Bytes,
   header : Header,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Feature raise FgbError {
   limits.validate()
   let payload = sized_payload(data, 0, limits.max_feature_bytes)
@@ -45,7 +45,7 @@ pub fn decode_feature(
 pub fn encode_feature(
   feature : Feature,
   header : Header,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Bytes raise FgbError {
   limits.validate()
   let properties = encode_properties(
@@ -77,9 +77,9 @@ pub fn encode_feature(
 
 ///|
 pub(all) struct FeatureRecord {
-  ordinal : Int
-  offset : Int
-  byte_length : Int
+  ordinal : Int32
+  offset : Int32
+  byte_length : Int32
   feature : Feature
 } derive(Eq, Debug)
 

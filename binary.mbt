@@ -1,17 +1,17 @@
 ///|
-fn u8(data : Bytes, at : Int) -> Int raise FgbError {
+fn u8(data : Bytes, at : Int32) -> Int32 raise FgbError {
   require_range(data, at, 1)
   data[at].to_int()
 }
 
 ///|
-fn u16(data : Bytes, at : Int) -> Int raise FgbError {
+fn u16(data : Bytes, at : Int32) -> Int32 raise FgbError {
   require_range(data, at, 2)
   data[at].to_int() | (data[at + 1].to_int() << 8)
 }
 
 ///|
-fn i16(data : Bytes, at : Int) -> Int raise FgbError {
+fn i16(data : Bytes, at : Int32) -> Int32 raise FgbError {
   let value = u16(data, at)
   if value >= 32768 {
     value - 65536
@@ -21,7 +21,7 @@ fn i16(data : Bytes, at : Int) -> Int raise FgbError {
 }
 
 ///|
-fn u32(data : Bytes, at : Int) -> UInt raise FgbError {
+fn u32(data : Bytes, at : Int32) -> UInt32 raise FgbError {
   require_range(data, at, 4)
   let mut value = 0U
   for i in 0..<4 {
@@ -31,12 +31,12 @@ fn u32(data : Bytes, at : Int) -> UInt raise FgbError {
 }
 
 ///|
-fn i32(data : Bytes, at : Int) -> Int raise FgbError {
+fn i32(data : Bytes, at : Int32) -> Int32 raise FgbError {
   u32(data, at).reinterpret_as_int()
 }
 
 ///|
-fn size32(data : Bytes, at : Int) -> Int raise FgbError {
+fn size32(data : Bytes, at : Int32) -> Int32 raise FgbError {
   let value = u32(data, at)
   if value > 2147483647U {
     raise InvalidData(at, "32-bit size exceeds addressable range")
@@ -45,7 +45,7 @@ fn size32(data : Bytes, at : Int) -> Int raise FgbError {
 }
 
 ///|
-fn u64(data : Bytes, at : Int) -> UInt64 raise FgbError {
+fn u64(data : Bytes, at : Int32) -> UInt64 raise FgbError {
   require_range(data, at, 8)
   let mut value = 0UL
   for i in 0..<8 {
@@ -55,7 +55,7 @@ fn u64(data : Bytes, at : Int) -> UInt64 raise FgbError {
 }
 
 ///|
-fn size64(data : Bytes, at : Int) -> Int raise FgbError {
+fn size64(data : Bytes, at : Int32) -> Int32 raise FgbError {
   let value = u64(data, at)
   if value > 2147483647UL {
     raise InvalidData(at, "64-bit size exceeds supported 2 GiB address space")
@@ -64,7 +64,7 @@ fn size64(data : Bytes, at : Int) -> Int raise FgbError {
 }
 
 ///|
-fn f64(data : Bytes, at : Int) -> Double raise FgbError {
+fn f64(data : Bytes, at : Int32) -> Double raise FgbError {
   let result = u64(data, at).reinterpret_as_double()
   if !finite(result) {
     raise InvalidData(at, "non-finite number")
@@ -73,7 +73,7 @@ fn f64(data : Bytes, at : Int) -> Double raise FgbError {
 }
 
 ///|
-fn f32(data : Bytes, at : Int) -> Double raise FgbError {
+fn f32(data : Bytes, at : Int32) -> Double raise FgbError {
   let result = Float::reinterpret_from_uint(u32(data, at)).to_double()
   if !finite(result) {
     raise InvalidData(at, "non-finite number")
@@ -82,7 +82,7 @@ fn f32(data : Bytes, at : Int) -> Double raise FgbError {
 }
 
 ///|
-fn slice_bytes(data : Bytes, at : Int, size : Int) -> Bytes raise FgbError {
+fn slice_bytes(data : Bytes, at : Int32, size : Int32) -> Bytes raise FgbError {
   require_range(data, at, size)
   Bytes::makei(size, i => data[at + i])
 }
@@ -90,8 +90,8 @@ fn slice_bytes(data : Bytes, at : Int, size : Int) -> Bytes raise FgbError {
 ///|
 fn decode_text(
   data : Bytes,
-  at : Int,
-  size : Int,
+  at : Int32,
+  size : Int32,
   limits : Limits,
 ) -> String raise FgbError {
   enforce(size, limits.max_string_bytes, "string bytes")
@@ -112,12 +112,12 @@ fn ByteWriter::new() -> ByteWriter {
 }
 
 ///|
-fn ByteWriter::position(self : ByteWriter) -> Int {
+fn ByteWriter::position(self : ByteWriter) -> Int32 {
   self.data.length()
 }
 
 ///|
-fn ByteWriter::zeros(self : ByteWriter, count : Int) -> Unit {
+fn ByteWriter::zeros(self : ByteWriter, count : Int32) -> Unit {
   for _ in 0..<count {
     self.data.push(0)
   }
@@ -126,8 +126,8 @@ fn ByteWriter::zeros(self : ByteWriter, count : Int) -> Unit {
 ///|
 fn ByteWriter::align(
   self : ByteWriter,
-  alignment : Int,
-  bias? : Int = 0,
+  alignment : Int32,
+  bias~ : Int32 = 0,
 ) -> Unit {
   while (self.position() + bias) % alignment != 0 {
     self.data.push(0)
@@ -135,18 +135,18 @@ fn ByteWriter::align(
 }
 
 ///|
-fn ByteWriter::byte(self : ByteWriter, value : Int) -> Unit {
+fn ByteWriter::byte(self : ByteWriter, value : Int32) -> Unit {
   self.data.push((value & 255).to_byte())
 }
 
 ///|
-fn ByteWriter::short(self : ByteWriter, value : Int) -> Unit {
+fn ByteWriter::short(self : ByteWriter, value : Int32) -> Unit {
   self.byte(value)
   self.byte(value >> 8)
 }
 
 ///|
-fn ByteWriter::word(self : ByteWriter, value : UInt) -> Unit {
+fn ByteWriter::word(self : ByteWriter, value : UInt32) -> Unit {
   for i in 0..<4 {
     self.byte((value >> (i * 8)).reinterpret_as_int())
   }
@@ -177,20 +177,28 @@ fn ByteWriter::bytes(self : ByteWriter, bytes : Bytes) -> Unit {
 }
 
 ///|
-fn ByteWriter::patch_word(self : ByteWriter, at : Int, value : Int) -> Unit {
+fn ByteWriter::patch_word(self : ByteWriter, at : Int32, value : Int32) -> Unit {
   for i in 0..<4 {
     self.data[at + i] = ((value >> (i * 8)) & 255).to_byte()
   }
 }
 
 ///|
-fn ByteWriter::patch_short(self : ByteWriter, at : Int, value : Int) -> Unit {
+fn ByteWriter::patch_short(
+  self : ByteWriter,
+  at : Int32,
+  value : Int32,
+) -> Unit {
   self.data[at] = (value & 255).to_byte()
   self.data[at + 1] = ((value >> 8) & 255).to_byte()
 }
 
 ///|
-fn ByteWriter::patch_long(self : ByteWriter, at : Int, value : UInt64) -> Unit {
+fn ByteWriter::patch_long(
+  self : ByteWriter,
+  at : Int32,
+  value : UInt64,
+) -> Unit {
   for i in 0..<8 {
     self.data[at + i] = ((value >> (i * 8)).to_int() & 255).to_byte()
   }

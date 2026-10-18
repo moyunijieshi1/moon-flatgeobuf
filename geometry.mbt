@@ -31,7 +31,7 @@ pub fn Geometry::bounds(self : Geometry) -> Bounds? {
 }
 
 ///|
-pub fn Geometry::coordinate_count(self : Geometry) -> Int {
+pub fn Geometry::coordinate_count(self : Geometry) -> Int32 {
   let mut count = self.xy.length()
   for part in self.parts {
     count += part.coordinate_count()
@@ -40,7 +40,7 @@ pub fn Geometry::coordinate_count(self : Geometry) -> Int {
 }
 
 ///|
-fn part_ends(geometry : Geometry) -> Array[Int] {
+fn part_ends(geometry : Geometry) -> Array[Int32] {
   if geometry.ends.is_empty() && !geometry.xy.is_empty() {
     [geometry.xy.length()]
   } else {
@@ -52,8 +52,8 @@ fn part_ends(geometry : Geometry) -> Array[Int] {
 fn validate_geometry_inner(
   g : Geometry,
   limits : Limits,
-  depth : Int,
-) -> Int raise FgbError {
+  depth : Int32,
+) -> Int32 raise FgbError {
   enforce(depth, limits.max_depth, "geometry depth")
   enforce(g.xy.length(), limits.max_coordinates, "coordinate count")
   for coordinate in g.xy {
@@ -138,7 +138,7 @@ fn validate_geometry_inner(
 ///|
 pub fn Geometry::validate(
   self : Geometry,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Unit raise FgbError {
   limits.validate()
   validate_geometry_inner(self, limits, 1) |> ignore
@@ -147,11 +147,11 @@ pub fn Geometry::validate(
 ///|
 fn read_geometry(
   data : Bytes,
-  at : Int,
+  at : Int32,
   kind : GeometryKind,
   limits : Limits,
-  depth : Int,
-  budget : Ref[Int],
+  depth : Int32,
+  budget : Ref[Int32],
 ) -> Geometry raise FgbError {
   enforce(depth, limits.max_depth, "geometry depth")
   let table = TableView::open(data, at)
@@ -180,7 +180,7 @@ fn read_geometry(
     xy.push({ x: f64(data, xy_at + i * 16), y: f64(data, xy_at + i * 16 + 8), })
   }
   let (ends_at, ends_count) = table.vector(0, 4, limits.max_coordinates)
-  let ends : Array[Int] = []
+  let ends : Array[Int32] = []
   for i in 0..<ends_count {
     ends.push(size32(data, ends_at + i * 4))
   }
@@ -200,7 +200,7 @@ fn read_geometry(
 }
 
 ///|
-fn write_geometry(b : FbBuilder, g : Geometry) -> Int {
+fn write_geometry(b : FbBuilder, g : Geometry) -> Int32 {
   let table = b.table(8)
   if !g.ends.is_empty() {
     let at = b.vector(g.ends.length(), 4)

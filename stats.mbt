@@ -1,10 +1,10 @@
 ///|
 pub(all) struct DatasetSummary {
-  features : Int
-  null_geometries : Int
-  coordinates : Int
+  features : Int32
+  null_geometries : Int32
+  coordinates : Int32
   envelope : Bounds?
-  geometry_types : Array[(String, Int)]
+  geometry_types : Array[(String, Int32)]
   columns : Array[ColumnSummary]
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
@@ -12,15 +12,18 @@ pub(all) struct DatasetSummary {
 pub(all) struct ColumnSummary {
   name : String
   type_name : String
-  nulls : Int
-  present : Int
+  nulls : Int32
+  present : Int32
   minimum : String?
   maximum : String?
-  total_bytes : Int
+  total_bytes : Int32
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-fn compare_properties(left : Property, right : Property) -> Int raise FgbError {
+fn compare_properties(
+  left : Property,
+  right : Property,
+) -> Int32 raise FgbError {
   match (left, right) {
     (Integer(a), Integer(b)) => a.compare(b)
     (Unsigned(a), Unsigned(b)) => a.compare(b)
@@ -47,12 +50,12 @@ fn property_text(value : Property) -> String? {
 ///|
 pub fn Dataset::summarize(
   self : Dataset,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> DatasetSummary raise FgbError {
   limits.validate()
   validate_header(self.header, limits~)
   enforce(self.features.length(), limits.max_features, "summary feature count")
-  let types : Map[String, Int] = Map([])
+  let types : Map[String, Int32] = Map([])
   let mut null_geometries = 0
   let mut coordinates = 0
   let nulls = Array::make(self.header.columns.length(), 0)
@@ -88,6 +91,12 @@ pub fn Dataset::summarize(
       present[i] += 1
       let writer = ByteWriter::new()
       write_property(writer, value, self.header.columns[i].type_code, limits)
+      let (value, _) = read_property(
+        writer.finish(),
+        0,
+        self.header.columns[i].type_code,
+        limits,
+      )
       byte_counts[i] = checked_add(byte_counts[i], writer.position())
       if value is Binary(_) {
         continue
@@ -139,19 +148,19 @@ pub fn Dataset::summarize(
 
 ///|
 pub(all) struct ArchiveSummary {
-  file_bytes : Int
-  header_bytes : Int
-  index_bytes : Int
-  feature_bytes : Int
-  minimum_record_bytes : Int
-  maximum_record_bytes : Int
+  file_bytes : Int32
+  header_bytes : Int32
+  index_bytes : Int32
+  feature_bytes : Int32
+  minimum_record_bytes : Int32
+  maximum_record_bytes : Int32
   dataset : DatasetSummary
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub fn inspect_archive(
   data : Bytes,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> ArchiveSummary raise FgbError {
   let reader = Reader::open(data, limits~)
   let dataset = reader.read_all()

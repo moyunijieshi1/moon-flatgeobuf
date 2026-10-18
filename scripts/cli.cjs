@@ -36,7 +36,7 @@ async function main() {
     writeNew(args[5],api.query(fs.readFileSync(args[0]),JSON.stringify(box))+'\n');
   }else if(command==='remote'&&args.length===6){
     const result=await queryRemote(args[0],bounds(args.slice(1,5)));
-    writeNew(args[5],JSON.stringify(result.data)+'\n');
+    writeNew(args[5],result.geojson+'\n');
     console.error(JSON.stringify(result.stats));
   }else{throw new Error(usage);}
 }

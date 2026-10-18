@@ -59,7 +59,7 @@ pub fn next_remote(session : @fgb.RangeQuery) -> String raise {
 ///|
 pub fn accept_remote(
   session : @fgb.RangeQuery,
-  status : Int,
+  status : Int32,
   content_range : String,
   etag : String,
   bytes : Bytes,

@@ -3,21 +3,21 @@ pub(all) struct Diagnostic {
   severity : String
   code : String
   message : String
-  feature : Int?
+  feature : Int32?
   column : String?
-  byte_offset : Int?
+  byte_offset : Int32?
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 pub(all) struct ValidationReport {
   valid : Bool
-  checked_features : Int
+  checked_features : Int32
   diagnostics : Array[Diagnostic]
   truncated : Bool
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-fn diagnostic_from_error(error : FgbError, feature : Int?) -> Diagnostic {
+fn diagnostic_from_error(error : FgbError, feature : Int32?) -> Diagnostic {
   match error {
     InvalidData(offset, message) =>
       {
@@ -61,8 +61,8 @@ fn diagnostic_from_error(error : FgbError, feature : Int?) -> Diagnostic {
 ///|
 pub fn Dataset::validate(
   self : Dataset,
-  limits? : Limits = Limits::default(),
-  max_diagnostics? : Int = 100,
+  limits~ : Limits = Limits::default(),
+  max_diagnostics~ : Int32 = 100,
 ) -> ValidationReport raise FgbError {
   limits.validate()
   if max_diagnostics < 1 || max_diagnostics > 10000 {
@@ -176,7 +176,7 @@ pub fn Dataset::validate(
 ///|
 pub fn audit_archive(
   data : Bytes,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> ValidationReport {
   try {
     let reader = Reader::open(data, limits~)
@@ -216,7 +216,7 @@ pub fn Header::is_wgs84(self : Header) -> Bool {
 ///|
 pub fn Header::validate_geojson_crs(
   self : Header,
-  assume_wgs84? : Bool = false,
+  assume_wgs84~ : Bool = false,
 ) -> Unit raise FgbError {
   if self.is_wgs84() {
     return
@@ -232,7 +232,7 @@ pub fn Header::validate_geojson_crs(
 ///|
 pub fn Geometry::validate_wgs84(
   self : Geometry,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Unit raise FgbError {
   self.validate(limits~)
   fn check(geometry : Geometry) -> Unit raise FgbError {

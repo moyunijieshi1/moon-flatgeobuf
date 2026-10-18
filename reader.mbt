@@ -3,17 +3,17 @@ pub struct Reader {
   data : Bytes
   header_ : Header
   limits : Limits
-  index_start : Int
-  index_size : Int
-  features_start : Int
-  mut cursor : Int
-  mut ordinal : Int
+  index_start : Int32
+  index_size : Int32
+  features_start : Int32
+  mut cursor : Int32
+  mut ordinal : Int32
 }
 
 ///|
 pub fn Reader::open(
   data : Bytes,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Reader raise FgbError {
   limits.validate()
   enforce(data.length(), limits.max_file_bytes, "file bytes")
@@ -50,7 +50,7 @@ pub fn Reader::header(self : Reader) -> Header {
 }
 
 ///|
-pub fn Reader::feature_section_offset(self : Reader) -> Int {
+pub fn Reader::feature_section_offset(self : Reader) -> Int32 {
   self.features_start
 }
 
@@ -68,8 +68,8 @@ pub fn Reader::rewind(self : Reader) -> Unit {
 ///|
 fn Reader::record(
   self : Reader,
-  offset : Int,
-  ordinal : Int,
+  offset : Int32,
+  ordinal : Int32,
 ) -> FeatureRecord raise FgbError {
   let at = checked_add(self.features_start, offset)
   let size = size32(self.data, at)
@@ -120,13 +120,16 @@ pub fn Reader::read_all(self : Reader) -> Dataset raise FgbError {
 ///|
 pub fn read_dataset(
   data : Bytes,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Dataset raise FgbError {
   Reader::open(data, limits~).read_all()
 }
 
 ///|
-pub fn Reader::at(self : Reader, ordinal : Int) -> FeatureRecord raise FgbError {
+pub fn Reader::at(
+  self : Reader,
+  ordinal : Int32,
+) -> FeatureRecord raise FgbError {
   if ordinal < 0 {
     raise InvalidArgument("negative feature ordinal")
   }

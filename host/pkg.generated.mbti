@@ -1,0 +1,39 @@
+// Generated using `moon info`, DON'T EDIT IT
+package "moyunijieshi1/moon-flatgeobuf/host"
+
+import {
+  "moyunijieshi1/moon-flatgeobuf",
+}
+
+// Values
+pub fn accept_remote(@moon-flatgeobuf.RangeQuery, Int, String, String, Bytes) -> Unit raise
+
+pub fn audit(Bytes) -> String raise
+
+pub fn decode(Bytes) -> String raise
+
+pub fn encode(String, Bool) -> Bytes raise
+
+pub fn inspect(Bytes) -> String raise
+
+pub fn next_remote(@moon-flatgeobuf.RangeQuery) -> String raise
+
+pub fn query(Bytes, String) -> String raise
+
+pub fn report(Bytes) -> String
+
+pub fn result_remote(@moon-flatgeobuf.RangeQuery) -> String raise
+
+pub fn start_remote(String) -> @moon-flatgeobuf.RangeQuery raise
+
+pub fn stats_remote(@moon-flatgeobuf.RangeQuery) -> String
+
+pub fn summary(Bytes) -> String raise
+
+// Errors
+
+// Types and methods
+
+// Type aliases
+
+// Traits

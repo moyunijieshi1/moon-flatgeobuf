@@ -27,6 +27,6 @@ async function queryRemote(url, bounds, options = {}) {
     api.accept_remote(session,response.status,response.headers.get('content-range') || '',etag,data);
     validator=etag;
   }
-  return {data:JSON.parse(api.result_remote(session)),stats:JSON.parse(api.stats_remote(session))};
+  return {geojson:api.result_remote(session),stats:JSON.parse(api.stats_remote(session))};
 }
 module.exports={queryRemote};

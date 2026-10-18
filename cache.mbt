@@ -1,35 +1,35 @@
 ///|
 struct CachedRange {
-  start : Int
+  start : Int32
   bytes : Bytes
 }
 
 ///|
 pub(all) struct CacheStats {
-  hits : Int
-  misses : Int
-  evictions : Int
-  retained_bytes : Int
-  entries : Int
+  hits : Int32
+  misses : Int32
+  evictions : Int32
+  retained_bytes : Int32
+  entries : Int32
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
 /// A cache belongs to one resource. Switching URL requires clear(), even if ETags match.
 pub struct RangeCache {
-  capacity : Int
-  max_entries : Int
+  capacity : Int32
+  max_entries : Int32
   mut validator : String
   entries_ : Array[CachedRange]
-  mut retained : Int
-  mut hits : Int
-  mut misses : Int
-  mut evictions : Int
+  mut retained : Int32
+  mut hits : Int32
+  mut misses : Int32
+  mut evictions : Int32
 }
 
 ///|
 pub fn RangeCache::new(
-  capacity : Int,
-  max_entries? : Int = 256,
+  capacity : Int32,
+  max_entries~ : Int32 = 256,
 ) -> RangeCache raise FgbError {
   if capacity < 1 || max_entries < 1 {
     raise InvalidArgument("cache capacity and entry count must be positive")
@@ -141,8 +141,8 @@ pub fn RangeCache::put(
 /// Coalesce requested intervals without exceeding a caller-chosen transfer size.
 pub fn coalesce_ranges(
   ranges : Array[ByteRange],
-  max_gap : Int,
-  max_length : Int,
+  max_gap : Int32,
+  max_length : Int32,
 ) -> Array[ByteRange] raise FgbError {
   if max_gap < 0 || max_length < 1 {
     raise InvalidArgument("invalid range coalescing policy")

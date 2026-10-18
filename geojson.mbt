@@ -44,8 +44,8 @@ fn coordinate_json(coordinate : Coordinate) -> Json {
 ///|
 fn coordinates_json(
   coordinates : Array[Coordinate],
-  start : Int,
-  end : Int,
+  start : Int32,
+  end : Int32,
 ) -> Json {
   let items : Array[Json] = []
   for i in start..<end {
@@ -93,7 +93,7 @@ fn parse_coordinate(value : Json) -> Coordinate raise FgbError {
 fn parse_coordinates(
   value : Json,
   limits : Limits,
-  budget : Ref[Int],
+  budget : Ref[Int32],
 ) -> Array[Coordinate] raise FgbError {
   let values = json_array(value)
   budget.val = checked_add(budget.val, values.length())
@@ -110,12 +110,12 @@ fn parse_parts(
   value : Json,
   kind : GeometryKind,
   limits : Limits,
-  budget : Ref[Int],
+  budget : Ref[Int32],
 ) -> Geometry raise FgbError {
   let parts = json_array(value)
   enforce(parts.length(), limits.max_coordinates, "GeoJSON part count")
   let xy : Array[Coordinate] = []
-  let ends : Array[Int] = []
+  let ends : Array[Int32] = []
   for part in parts {
     let coordinates = parse_coordinates(part, limits, budget)
     for coordinate in coordinates {
@@ -129,7 +129,7 @@ fn parse_parts(
 ///|
 pub fn geometry_from_geojson(
   value : Json,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Geometry raise FgbError {
   limits.validate()
   let kind = json_text(json_field(value, "type"))
@@ -231,7 +231,7 @@ pub fn Feature::to_geojson(
 ///|
 pub fn Dataset::to_geojson(
   self : Dataset,
-  allow_projected? : Bool = false,
+  allow_projected~ : Bool = false,
 ) -> Json raise FgbError {
   match self.header.crs {
     Some(crs) =>
@@ -274,20 +274,34 @@ fn property_from_json(
     0 | 3 | 5 | 7 => {
       json_number(value) |> ignore
       let n : Int64 = @json.from_json(Json::string(value.stringify())) catch {
-        _ =>
-          raise InvalidArgument(
-            "expected exact signed integer for \{column.name}",
-          )
+        _ => {
+          let number = json_number(value)
+          if number < -9007199254740991.0 ||
+            number > 9007199254740991.0 ||
+            number != @math.floor(number) {
+            raise InvalidArgument(
+              "expected exact signed integer for \{column.name}",
+            )
+          }
+          number.to_int64()
+        }
       }
       Integer(n)
     }
     1 | 4 | 6 | 8 => {
       json_number(value) |> ignore
       let n : UInt64 = @json.from_json(Json::string(value.stringify())) catch {
-        _ =>
-          raise InvalidArgument(
-            "expected exact unsigned integer for \{column.name}",
-          )
+        _ => {
+          let number = json_number(value)
+          if number < 0.0 ||
+            number > 9007199254740991.0 ||
+            number != @math.floor(number) {
+            raise InvalidArgument(
+              "expected exact unsigned integer for \{column.name}",
+            )
+          }
+          number.to_uint64()
+        }
       }
       Unsigned(n)
     }
@@ -326,7 +340,7 @@ fn property_from_json(
 pub fn feature_from_geojson(
   value : Json,
   header : Header,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Feature raise FgbError {
   if json_text(json_field(value, "type")) != "Feature" {
     raise InvalidArgument("GeoJSON item must be Feature")
@@ -366,7 +380,7 @@ pub fn feature_from_geojson(
 pub fn dataset_from_geojson(
   value : Json,
   header : Header,
-  limits? : Limits = Limits::default(),
+  limits~ : Limits = Limits::default(),
 ) -> Dataset raise FgbError {
   limits.validate()
   validate_header(header, limits~)

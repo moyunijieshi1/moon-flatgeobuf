@@ -12,7 +12,7 @@ pub(all) enum Predicate {
 } derive(Eq, Debug)
 
 ///|
-fn column_index(header : Header, name : String) -> Int raise FgbError {
+fn column_index(header : Header, name : String) -> Int32 raise FgbError {
   for i in 0..<header.columns.length() {
     if header.columns[i].name == name {
       return i
@@ -25,7 +25,7 @@ fn column_index(header : Header, name : String) -> Int raise FgbError {
 fn validate_predicate(
   predicate : Predicate,
   header : Header,
-  depth : Int,
+  depth : Int32,
   limits : Limits,
 ) -> Unit raise FgbError {
   enforce(depth, limits.max_depth, "predicate depth")
@@ -131,8 +131,8 @@ pub(all) struct Selection {
   bounds : Bounds?
   predicate : Predicate?
   fields : Array[String]?
-  offset : Int
-  limit : Int
+  offset : Int32
+  limit : Int32
 } derive(Eq, Debug)
 
 ///|
@@ -146,7 +146,7 @@ pub fn Dataset::project(
   fields : Array[String],
 ) -> Dataset raise FgbError {
   let seen : Map[String, Bool] = Map([])
-  let indexes : Array[Int] = []
+  let indexes : Array[Int32] = []
   let columns : Array[Column] = []
   for name in fields {
     if seen.contains(name) {
