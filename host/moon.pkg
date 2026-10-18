@@ -6,7 +6,20 @@ import {
 options(
   link: {
     "js": {
-      "exports": [ "encode", "decode", "inspect", "query", "audit" ],
+      "exports": [
+        "encode",
+        "decode",
+        "inspect",
+        "query",
+        "audit",
+        "start_remote",
+        "next_remote",
+        "accept_remote",
+        "result_remote",
+        "stats_remote",
+        "summary",
+        "report",
+      ],
       "format": "cjs",
     },
   },

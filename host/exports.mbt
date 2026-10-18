@@ -40,3 +40,49 @@ pub fn audit(data : Bytes) -> String raise {
   reader.validate()
   "ok"
 }
+
+///|
+pub fn start_remote(bounds : String) -> @fgb.RangeQuery raise {
+  let bounds : @fgb.Bounds = @json.from_json(@json.parse(bounds))
+  @fgb.RangeQuery::new(bounds)
+}
+
+///|
+pub fn next_remote(session : @fgb.RangeQuery) -> String raise {
+  let request = session.request()
+  match request {
+    None => "null"
+    Some(range) => range.to_json().stringify()
+  }
+}
+
+///|
+pub fn accept_remote(
+  session : @fgb.RangeQuery,
+  status : Int,
+  content_range : String,
+  etag : String,
+  bytes : Bytes,
+) -> Unit raise {
+  session.accept({ status, content_range, etag, body: bytes, })
+}
+
+///|
+pub fn result_remote(session : @fgb.RangeQuery) -> String raise {
+  session.result().to_geojson().stringify()
+}
+
+///|
+pub fn stats_remote(session : @fgb.RangeQuery) -> String {
+  session.stats().to_json().stringify()
+}
+
+///|
+pub fn summary(data : Bytes) -> String raise {
+  @fgb.inspect_archive(data).to_json().stringify()
+}
+
+///|
+pub fn report(data : Bytes) -> String {
+  @fgb.audit_archive(data).to_json().stringify()
+}

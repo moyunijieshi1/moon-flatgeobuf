@@ -1,0 +1,6 @@
+import {
+  "moyunijieshi1/moon-flatgeobuf" @fgb,
+  "moonbitlang/core/json",
+}
+
+pkgtype(kind: "executable")
