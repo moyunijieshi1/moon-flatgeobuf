@@ -3,15 +3,28 @@ pub fn Geometry::bounds(self : Geometry) -> Bounds? {
   let mut result : Bounds? = None
   for coordinate in self.xy {
     let b : Bounds = {
-      min_x: coordinate.x, min_y: coordinate.y,
-      max_x: coordinate.x, max_y: coordinate.y,
+      min_x: coordinate.x,
+      min_y: coordinate.y,
+      max_x: coordinate.x,
+      max_y: coordinate.y,
     }
-    result = Some(match result { None => b; Some(old) => old.union(b) })
+    result = Some(
+      match result {
+        None => b
+        Some(old) => old.union(b)
+      },
+    )
   }
   for part in self.parts {
     match part.bounds() {
       None => ()
-      Some(b) => result = Some(match result { None => b; Some(old) => old.union(b) })
+      Some(b) =>
+        result = Some(
+          match result {
+            None => b
+            Some(old) => old.union(b)
+          },
+        )
     }
   }
   result
@@ -36,7 +49,11 @@ fn part_ends(geometry : Geometry) -> Array[Int] {
 }
 
 ///|
-fn validate_geometry_inner(g : Geometry, limits : Limits, depth : Int) -> Int raise FgbError {
+fn validate_geometry_inner(
+  g : Geometry,
+  limits : Limits,
+  depth : Int,
+) -> Int raise FgbError {
   enforce(depth, limits.max_depth, "geometry depth")
   enforce(g.xy.length(), limits.max_coordinates, "coordinate count")
   for coordinate in g.xy {
@@ -56,21 +73,18 @@ fn validate_geometry_inner(g : Geometry, limits : Limits, depth : Int) -> Int ra
   }
   match g.kind {
     Unknown => raise InvalidArgument("concrete geometry needs a known type")
-    Point => {
+    Point =>
       if g.xy.length() != 1 || !g.parts.is_empty() || !g.ends.is_empty() {
         raise InvalidArgument("Point requires exactly one xy pair")
       }
-    }
-    MultiPoint => {
+    MultiPoint =>
       if g.xy.is_empty() || !g.parts.is_empty() || !g.ends.is_empty() {
         raise InvalidArgument("MultiPoint needs xy pairs without ends or parts")
       }
-    }
-    LineString => {
+    LineString =>
       if g.xy.length() < 2 || !g.parts.is_empty() || !g.ends.is_empty() {
         raise InvalidArgument("LineString requires at least two xy pairs")
       }
-    }
     MultiLineString => {
       if !g.parts.is_empty() || g.xy.is_empty() {
         raise InvalidArgument("MultiLineString requires flat xy and ends")
@@ -78,7 +92,9 @@ fn validate_geometry_inner(g : Geometry, limits : Limits, depth : Int) -> Int ra
       let mut start = 0
       for end in part_ends(g) {
         if end - start < 2 {
-          raise InvalidArgument("each line must contain at least two coordinates")
+          raise InvalidArgument(
+            "each line must contain at least two coordinates",
+          )
         }
         start = end
       }
@@ -90,7 +106,9 @@ fn validate_geometry_inner(g : Geometry, limits : Limits, depth : Int) -> Int ra
       let mut start = 0
       for end in part_ends(g) {
         if end - start < 4 || g.xy[start] != g.xy[end - 1] {
-          raise InvalidArgument("polygon rings must be closed and contain four coordinates")
+          raise InvalidArgument(
+            "polygon rings must be closed and contain four coordinates",
+          )
         }
         start = end
       }
@@ -108,20 +126,33 @@ fn validate_geometry_inner(g : Geometry, limits : Limits, depth : Int) -> Int ra
   }
   let mut count = g.xy.length()
   for child in g.parts {
-    count = checked_add(count, validate_geometry_inner(child, limits, depth + 1))
+    count = checked_add(
+      count,
+      validate_geometry_inner(child, limits, depth + 1),
+    )
     enforce(count, limits.max_coordinates, "total coordinates")
   }
   count
 }
 
 ///|
-pub fn Geometry::validate(self : Geometry, limits? : Limits = Limits::default()) -> Unit raise FgbError {
+pub fn Geometry::validate(
+  self : Geometry,
+  limits? : Limits = Limits::default(),
+) -> Unit raise FgbError {
   limits.validate()
   validate_geometry_inner(self, limits, 1) |> ignore
 }
 
 ///|
-fn read_geometry(data : Bytes, at : Int, kind : GeometryKind, limits : Limits, depth : Int, budget : Ref[Int]) -> Geometry raise FgbError {
+fn read_geometry(
+  data : Bytes,
+  at : Int,
+  kind : GeometryKind,
+  limits : Limits,
+  depth : Int,
+  budget : Ref[Int],
+) -> Geometry raise FgbError {
   enforce(depth, limits.max_depth, "geometry depth")
   let table = TableView::open(data, at)
   for field in 2..<6 {
@@ -134,7 +165,11 @@ fn read_geometry(data : Bytes, at : Int, kind : GeometryKind, limits : Limits, d
   if declared != Unknown && declared != resolved {
     raise InvalidData(at, "geometry type conflicts with header")
   }
-  let (xy_at, xy_count) = table.vector(1, 8, checked_mul(limits.max_coordinates, 2))
+  let (xy_at, xy_count) = table.vector(
+    1,
+    8,
+    checked_mul(limits.max_coordinates, 2),
+  )
   if xy_count % 2 != 0 {
     raise InvalidData(xy_at, "odd xy vector length")
   }
@@ -142,7 +177,7 @@ fn read_geometry(data : Bytes, at : Int, kind : GeometryKind, limits : Limits, d
   enforce(budget.val, limits.max_coordinates, "total coordinates")
   let xy : Array[Coordinate] = []
   for i in 0..<(xy_count / 2) {
-    xy.push({ x: f64(data, xy_at + i * 16), y: f64(data, xy_at + i * 16 + 8) })
+    xy.push({ x: f64(data, xy_at + i * 16), y: f64(data, xy_at + i * 16 + 8), })
   }
   let (ends_at, ends_count) = table.vector(0, 4, limits.max_coordinates)
   let ends : Array[Int] = []
@@ -158,7 +193,7 @@ fn read_geometry(data : Bytes, at : Int, kind : GeometryKind, limits : Limits, d
     let child = indirect(data, parts_at + i * 4)
     parts.push(read_geometry(data, child, Polygon, limits, depth + 1, budget))
   }
-  let result : Geometry = { kind: resolved, xy, ends, parts }
+  let result : Geometry = { kind: resolved, xy, ends, parts, }
   // Validation here checks shape rules without trusting the binary representation.
   validate_geometry_inner(result, limits, depth) |> ignore
   result

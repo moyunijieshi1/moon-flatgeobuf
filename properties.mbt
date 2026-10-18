@@ -10,7 +10,12 @@ fn property_width(code : Int) -> Int {
 }
 
 ///|
-fn read_property(data : Bytes, at : Int, code : Int, limits : Limits) -> (Property, Int) raise FgbError {
+fn read_property(
+  data : Bytes,
+  at : Int,
+  code : Int,
+  limits : Limits,
+) -> (Property, Int) raise FgbError {
   let width = property_width(code)
   if width > 0 {
     require_range(data, at, width)
@@ -61,7 +66,11 @@ fn read_property(data : Bytes, at : Int, code : Int, limits : Limits) -> (Proper
 }
 
 ///|
-pub fn decode_properties(data : Bytes, columns : Array[Column], limits? : Limits = Limits::default()) -> Array[Property] raise FgbError {
+pub fn decode_properties(
+  data : Bytes,
+  columns : Array[Column],
+  limits? : Limits = Limits::default(),
+) -> Array[Property] raise FgbError {
   limits.validate()
   enforce(columns.length(), limits.max_columns, "column count")
   let values = Array::make(columns.length(), Property::Null)
@@ -76,21 +85,33 @@ pub fn decode_properties(data : Bytes, columns : Array[Column], limits? : Limits
     if seen[key] {
       raise InvalidData(cursor - 2, "duplicate property key")
     }
-    let (value, end) = read_property(data, cursor, columns[key].type_code, limits)
+    let (value, end) = read_property(
+      data,
+      cursor,
+      columns[key].type_code,
+      limits,
+    )
     values[key] = value
     seen[key] = true
     cursor = end
   }
   for i in 0..<columns.length() {
     if !seen[i] && !columns[i].nullable {
-      raise InvalidData(cursor, "missing non-nullable property \{columns[i].name}")
+      raise InvalidData(
+        cursor,
+        "missing non-nullable property \{columns[i].name}",
+      )
     }
   }
   values
 }
 
 ///|
-fn signed_value(value : Property, minimum : Int64, maximum : Int64) -> Int64 raise FgbError {
+fn signed_value(
+  value : Property,
+  minimum : Int64,
+  maximum : Int64,
+) -> Int64 raise FgbError {
   guard value is Integer(n) else {
     raise InvalidArgument("expected signed integer property")
   }
@@ -128,7 +149,12 @@ fn real_value(value : Property) -> Double raise FgbError {
 }
 
 ///|
-fn write_property(writer : ByteWriter, value : Property, code : Int, limits : Limits) -> Unit raise FgbError {
+fn write_property(
+  writer : ByteWriter,
+  value : Property,
+  code : Int,
+  limits : Limits,
+) -> Unit raise FgbError {
   match code {
     0 => writer.byte(signed_value(value, -128L, 127L).to_int())
     1 => writer.byte(unsigned_value(value, 255UL).to_int())
@@ -140,7 +166,12 @@ fn write_property(writer : ByteWriter, value : Property, code : Int, limits : Li
     }
     3 => writer.short(signed_value(value, -32768L, 32767L).to_int())
     4 => writer.short(unsigned_value(value, 65535UL).to_int())
-    5 => writer.word(signed_value(value, -2147483648L, 2147483647L).to_int().reinterpret_as_uint())
+    5 =>
+      writer.word(
+        signed_value(value, -2147483648L, 2147483647L)
+        .to_int()
+        .reinterpret_as_uint(),
+      )
     6 => writer.word(unsigned_value(value, 4294967295UL).to_uint())
     7 => {
       guard value is Integer(n) else {
@@ -184,7 +215,11 @@ fn write_property(writer : ByteWriter, value : Property, code : Int, limits : Li
 }
 
 ///|
-pub fn encode_properties(values : Array[Property], columns : Array[Column], limits? : Limits = Limits::default()) -> Bytes raise FgbError {
+pub fn encode_properties(
+  values : Array[Property],
+  columns : Array[Column],
+  limits? : Limits = Limits::default(),
+) -> Bytes raise FgbError {
   limits.validate()
   enforce(columns.length(), limits.max_columns, "column count")
   if values.length() != columns.length() {

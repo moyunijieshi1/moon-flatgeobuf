@@ -23,7 +23,7 @@ fn TableView::open(data : Bytes, position : Int) -> TableView raise FgbError {
   }
   require_range(data, vtable, length)
   require_range(data, position, size)
-  { data, position, vtable, fields: (length - 4) / 2, size }
+  { data, position, vtable, fields: (length - 4) / 2, size, }
 }
 
 ///|
@@ -36,7 +36,11 @@ fn TableView::root(data : Bytes) -> TableView raise FgbError {
 }
 
 ///|
-fn TableView::field(self : TableView, id : Int, width : Int) -> Int raise FgbError {
+fn TableView::field(
+  self : TableView,
+  id : Int,
+  width : Int,
+) -> Int raise FgbError {
   if id >= self.fields {
     return 0
   }
@@ -51,27 +55,55 @@ fn TableView::field(self : TableView, id : Int, width : Int) -> Int raise FgbErr
 }
 
 ///|
-fn TableView::byte(self : TableView, id : Int, fallback? : Int = 0) -> Int raise FgbError {
+fn TableView::byte(
+  self : TableView,
+  id : Int,
+  fallback? : Int = 0,
+) -> Int raise FgbError {
   let at = self.field(id, 1)
-  if at == 0 { fallback } else { u8(self.data, at) }
+  if at == 0 {
+    fallback
+  } else {
+    u8(self.data, at)
+  }
 }
 
 ///|
-fn TableView::short(self : TableView, id : Int, fallback? : Int = 0) -> Int raise FgbError {
+fn TableView::short(
+  self : TableView,
+  id : Int,
+  fallback? : Int = 0,
+) -> Int raise FgbError {
   let at = self.field(id, 2)
-  if at == 0 { fallback } else { u16(self.data, at) }
+  if at == 0 {
+    fallback
+  } else {
+    u16(self.data, at)
+  }
 }
 
 ///|
-fn TableView::int(self : TableView, id : Int, fallback? : Int = 0) -> Int raise FgbError {
+fn TableView::int(
+  self : TableView,
+  id : Int,
+  fallback? : Int = 0,
+) -> Int raise FgbError {
   let at = self.field(id, 4)
-  if at == 0 { fallback } else { i32(self.data, at) }
+  if at == 0 {
+    fallback
+  } else {
+    i32(self.data, at)
+  }
 }
 
 ///|
 fn TableView::count(self : TableView, id : Int) -> Int raise FgbError {
   let at = self.field(id, 8)
-  if at == 0 { 0 } else { size64(self.data, at) }
+  if at == 0 {
+    0
+  } else {
+    size64(self.data, at)
+  }
 }
 
 ///|
@@ -88,7 +120,11 @@ fn indirect(data : Bytes, at : Int) -> Int raise FgbError {
 ///|
 fn TableView::reference(self : TableView, id : Int) -> Int raise FgbError {
   let at = self.field(id, 4)
-  if at == 0 { 0 } else { indirect(self.data, at) }
+  if at == 0 {
+    0
+  } else {
+    indirect(self.data, at)
+  }
 }
 
 ///|
@@ -103,13 +139,26 @@ fn text_at(data : Bytes, at : Int, limits : Limits) -> String raise FgbError {
 }
 
 ///|
-fn TableView::text(self : TableView, id : Int, limits : Limits) -> String raise FgbError {
+fn TableView::text(
+  self : TableView,
+  id : Int,
+  limits : Limits,
+) -> String raise FgbError {
   let at = self.reference(id)
-  if at == 0 { "" } else { text_at(self.data, at, limits) }
+  if at == 0 {
+    ""
+  } else {
+    text_at(self.data, at, limits)
+  }
 }
 
 ///|
-fn TableView::vector(self : TableView, id : Int, width : Int, limit : Int) -> (Int, Int) raise FgbError {
+fn TableView::vector(
+  self : TableView,
+  id : Int,
+  width : Int,
+  limit : Int,
+) -> (Int, Int) raise FgbError {
   let at = self.reference(id)
   if at == 0 {
     return (0, 0)
@@ -131,7 +180,7 @@ priv struct FbBuilder {
 fn FbBuilder::new() -> FbBuilder {
   let writer = ByteWriter::new()
   writer.zeros(8)
-  { writer }
+  { writer, }
 }
 
 ///|
@@ -160,25 +209,45 @@ fn FbBuilder::slot(self : FbBuilder, table : Int, field : Int) -> Int {
 }
 
 ///|
-fn FbBuilder::scalar(self : FbBuilder, table : Int, field : Int, value : Int) -> Unit {
+fn FbBuilder::scalar(
+  self : FbBuilder,
+  table : Int,
+  field : Int,
+  value : Int,
+) -> Unit {
   let at = self.slot(table, field)
   self.writer.patch_word(at, value)
 }
 
 ///|
-fn FbBuilder::long(self : FbBuilder, table : Int, field : Int, value : Int) -> Unit {
+fn FbBuilder::long(
+  self : FbBuilder,
+  table : Int,
+  field : Int,
+  value : Int,
+) -> Unit {
   let at = self.slot(table, field)
   self.writer.patch_long(at, value.to_uint64())
 }
 
 ///|
-fn FbBuilder::reference(self : FbBuilder, table : Int, field : Int, target : Int) -> Unit {
+fn FbBuilder::reference(
+  self : FbBuilder,
+  table : Int,
+  field : Int,
+  target : Int,
+) -> Unit {
   let at = self.slot(table, field)
   self.writer.patch_word(at, target - at)
 }
 
 ///|
-fn FbBuilder::text(self : FbBuilder, table : Int, field : Int, text : String) -> Unit {
+fn FbBuilder::text(
+  self : FbBuilder,
+  table : Int,
+  field : Int,
+  text : String,
+) -> Unit {
   self.writer.align(4)
   let at = self.writer.position()
   let bytes = @utf8.encode(text)

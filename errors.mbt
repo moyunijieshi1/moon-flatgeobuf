@@ -58,7 +58,9 @@ pub fn Limits::validate(self : Limits) -> Unit raise FgbError {
 
 ///|
 fn require_range(data : Bytes, offset : Int, size : Int) -> Unit raise FgbError {
-  if offset < 0 || size < 0 || offset > data.length() ||
+  if offset < 0 ||
+    size < 0 ||
+    offset > data.length() ||
     size > data.length() - offset {
     raise InvalidData(offset, "truncated or out-of-range buffer")
   }

@@ -14,18 +14,24 @@ pub(all) enum Predicate {
 ///|
 fn column_index(header : Header, name : String) -> Int raise FgbError {
   for i in 0..<header.columns.length() {
-    if header.columns[i].name == name { return i }
+    if header.columns[i].name == name {
+      return i
+    }
   }
   raise InvalidArgument("unknown column \{name}")
 }
 
 ///|
-fn validate_predicate(predicate : Predicate, header : Header, depth : Int, limits : Limits) -> Unit raise FgbError {
+fn validate_predicate(
+  predicate : Predicate,
+  header : Header,
+  depth : Int,
+  limits : Limits,
+) -> Unit raise FgbError {
   enforce(depth, limits.max_depth, "predicate depth")
   match predicate {
-    Equal(name, _) | NotEqual(name, _) | IsNull(name) | IsNotNull(name) => {
+    Equal(name, _) | NotEqual(name, _) | IsNull(name) | IsNotNull(name) =>
       column_index(header, name) |> ignore
-    }
     TextContains(name, _) => {
       let column = header.columns[column_index(header, name)]
       if column.type_code < 11 || column.type_code > 13 {
@@ -46,51 +52,73 @@ fn validate_predicate(predicate : Predicate, header : Header, depth : Int, limit
         _ => ()
       }
       match (low, high) {
-        (Some(a), Some(b)) if a > b => raise InvalidArgument("range minimum exceeds maximum")
+        (Some(a), Some(b)) if a > b =>
+          raise InvalidArgument("range minimum exceeds maximum")
         _ => ()
       }
       if column.type_code == 7 || column.type_code == 8 {
-        raise Unsupported("NumericRange on 64-bit integers; use exact equality or an application predicate")
+        raise Unsupported(
+          "NumericRange on 64-bit integers; use exact equality or an application predicate",
+        )
       }
     }
     All(items) | Any(items) => {
       enforce(items.length(), limits.max_columns, "predicate count")
-      for item in items { validate_predicate(item, header, depth + 1, limits) }
+      for item in items {
+        validate_predicate(item, header, depth + 1, limits)
+      }
     }
     Not(item) => validate_predicate(item, header, depth + 1, limits)
   }
 }
 
 ///|
-fn matches_predicate(feature : Feature, header : Header, predicate : Predicate) -> Bool raise FgbError {
+fn matches_predicate(
+  feature : Feature,
+  header : Header,
+  predicate : Predicate,
+) -> Bool raise FgbError {
   match predicate {
-    Equal(name, expected) => feature.properties[column_index(header, name)] == expected
-    NotEqual(name, expected) => feature.properties[column_index(header, name)] != expected
+    Equal(name, expected) =>
+      feature.properties[column_index(header, name)] == expected
+    NotEqual(name, expected) =>
+      feature.properties[column_index(header, name)] != expected
     IsNull(name) => feature.properties[column_index(header, name)] == Null
     IsNotNull(name) => feature.properties[column_index(header, name)] != Null
-    TextContains(name, text) => {
+    TextContains(name, text) =>
       match feature.properties[column_index(header, name)] {
         Text(value) => value.contains(text)
         _ => false
       }
-    }
     NumericRange(name, minimum, maximum) => {
       let value = feature.properties[column_index(header, name)]
-      if value == Null { return false }
+      if value == Null {
+        return false
+      }
       let number = real_value(value)
-      let low = match minimum { None => true; Some(n) => number >= n }
-      let high = match maximum { None => true; Some(n) => number <= n }
+      let low = match minimum {
+        None => true
+        Some(n) => number >= n
+      }
+      let high = match maximum {
+        None => true
+        Some(n) => number <= n
+      }
       low && high
     }
     All(items) => {
       for item in items {
-        if !matches_predicate(feature, header, item) { return false }
+        if !matches_predicate(feature, header, item) {
+          return false
+        }
       }
       true
     }
     Any(items) => {
       for item in items {
-        if matches_predicate(feature, header, item) { return true }
+        if matches_predicate(feature, header, item) {
+          return true
+        }
       }
       false
     }
@@ -109,16 +137,21 @@ pub(all) struct Selection {
 
 ///|
 pub fn Selection::all() -> Selection {
-  { bounds: None, predicate: None, fields: None, offset: 0, limit: 1000000 }
+  { bounds: None, predicate: None, fields: None, offset: 0, limit: 1000000, }
 }
 
 ///|
-pub fn Dataset::project(self : Dataset, fields : Array[String]) -> Dataset raise FgbError {
+pub fn Dataset::project(
+  self : Dataset,
+  fields : Array[String],
+) -> Dataset raise FgbError {
   let seen : Map[String, Bool] = Map([])
   let indexes : Array[Int] = []
   let columns : Array[Column] = []
   for name in fields {
-    if seen.contains(name) { raise InvalidArgument("duplicate projected field") }
+    if seen.contains(name) {
+      raise InvalidArgument("duplicate projected field")
+    }
     seen[name] = true
     let i = column_index(self.header, name)
     indexes.push(i)
@@ -129,44 +162,63 @@ pub fn Dataset::project(self : Dataset, fields : Array[String]) -> Dataset raise
     if feature.properties.length() != self.header.columns.length() {
       raise InvalidArgument("feature property count differs from header")
     }
-    features.push({ geometry: feature.geometry, properties: indexes.map(i => feature.properties[i]) })
+    features.push({
+      geometry: feature.geometry,
+      properties: indexes.map(i => feature.properties[i]),
+    })
   }
-  { header: { ..self.header, columns }, features }
+  { header: { ..self.header, columns, }, features, }
 }
 
 ///|
-pub fn Reader::select(self : Reader, selection : Selection) -> Dataset raise FgbError {
+pub fn Reader::select(
+  self : Reader,
+  selection : Selection,
+) -> Dataset raise FgbError {
   if selection.offset < 0 || selection.limit < 0 {
     raise InvalidArgument("pagination values must not be negative")
   }
   match selection.predicate {
     None => ()
-    Some(predicate) => validate_predicate(predicate, self.header_, 1, self.limits)
+    Some(predicate) =>
+      validate_predicate(predicate, self.header_, 1, self.limits)
   }
   let records = match selection.bounds {
     Some(bounds) => self.query(bounds)
     None => {
       self.rewind()
       let records : Array[FeatureRecord] = []
-      while self.next() is Some(record) { records.push(record) }
+      while self.next() is Some(record) {
+        records.push(record)
+      }
       records
     }
   }
   let features : Array[Feature] = []
   let mut skipped = 0
   for record in records {
-    if features.length() >= selection.limit { break }
+    if features.length() >= selection.limit {
+      break
+    }
     let accepted = match selection.predicate {
       None => true
-      Some(predicate) => matches_predicate(record.feature, self.header_, predicate)
+      Some(predicate) =>
+        matches_predicate(record.feature, self.header_, predicate)
     }
-    if !accepted { continue }
-    if skipped < selection.offset { skipped += 1; continue }
+    if !accepted {
+      continue
+    }
+    if skipped < selection.offset {
+      skipped += 1
+      continue
+    }
     features.push(record.feature)
   }
   let dataset : Dataset = {
     header: {
-      ..self.header_, index_node_size: 0, features_count: features.length(),
+      ..self.header_,
+      index_node_size: 0,
+      features_count: features.length(),
       envelope: dataset_bounds(features),
     },
     features,

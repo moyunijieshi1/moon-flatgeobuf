@@ -2,6 +2,7 @@ import {
   "moyunijieshi1/moon-flatgeobuf" @fgb,
   "moonbitlang/core/json",
 }
+
 options(
   link: {
     "js": {

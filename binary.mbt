@@ -13,7 +13,11 @@ fn u16(data : Bytes, at : Int) -> Int raise FgbError {
 ///|
 fn i16(data : Bytes, at : Int) -> Int raise FgbError {
   let value = u16(data, at)
-  if value >= 32768 { value - 65536 } else { value }
+  if value >= 32768 {
+    value - 65536
+  } else {
+    value
+  }
 }
 
 ///|
@@ -21,7 +25,7 @@ fn u32(data : Bytes, at : Int) -> UInt raise FgbError {
   require_range(data, at, 4)
   let mut value = 0U
   for i in 0..<4 {
-    value = value | (data[at + i].to_int().to_uint() << (i * 8))
+    value = value | (data[at + i].to_uint() << (i * 8))
   }
   value
 }
@@ -37,7 +41,7 @@ fn size32(data : Bytes, at : Int) -> Int raise FgbError {
   if value > 2147483647U {
     raise InvalidData(at, "32-bit size exceeds addressable range")
   }
-  value.to_int()
+  value.reinterpret_as_int()
 }
 
 ///|
@@ -70,7 +74,7 @@ fn f64(data : Bytes, at : Int) -> Double raise FgbError {
 
 ///|
 fn f32(data : Bytes, at : Int) -> Double raise FgbError {
-  let result = u32(data, at).reinterpret_as_float().to_double()
+  let result = Float::reinterpret_from_uint(u32(data, at)).to_double()
   if !finite(result) {
     raise InvalidData(at, "non-finite number")
   }
@@ -84,10 +88,15 @@ fn slice_bytes(data : Bytes, at : Int, size : Int) -> Bytes raise FgbError {
 }
 
 ///|
-fn decode_text(data : Bytes, at : Int, size : Int, limits : Limits) -> String raise FgbError {
+fn decode_text(
+  data : Bytes,
+  at : Int,
+  size : Int,
+  limits : Limits,
+) -> String raise FgbError {
   enforce(size, limits.max_string_bytes, "string bytes")
   let value = slice_bytes(data, at, size)
-  try @utf8.decode(value) catch {
+  @utf8.decode(value) catch {
     _ => raise InvalidData(at, "invalid UTF-8")
   }
 }
@@ -99,7 +108,7 @@ struct ByteWriter {
 
 ///|
 fn ByteWriter::new() -> ByteWriter {
-  { data: [] }
+  { data: [], }
 }
 
 ///|
@@ -115,7 +124,11 @@ fn ByteWriter::zeros(self : ByteWriter, count : Int) -> Unit {
 }
 
 ///|
-fn ByteWriter::align(self : ByteWriter, alignment : Int, bias? : Int = 0) -> Unit {
+fn ByteWriter::align(
+  self : ByteWriter,
+  alignment : Int,
+  bias? : Int = 0,
+) -> Unit {
   while (self.position() + bias) % alignment != 0 {
     self.data.push(0)
   }
@@ -135,7 +148,7 @@ fn ByteWriter::short(self : ByteWriter, value : Int) -> Unit {
 ///|
 fn ByteWriter::word(self : ByteWriter, value : UInt) -> Unit {
   for i in 0..<4 {
-    self.byte((value >> (i * 8)).to_int())
+    self.byte((value >> (i * 8)).reinterpret_as_int())
   }
 }
 
@@ -153,7 +166,7 @@ fn ByteWriter::double(self : ByteWriter, value : Double) -> Unit {
 
 ///|
 fn ByteWriter::float(self : ByteWriter, value : Double) -> Unit {
-  self.word(value.to_float().reinterpret_as_uint())
+  self.word(Float::from_double(value).reinterpret_as_uint())
 }
 
 ///|

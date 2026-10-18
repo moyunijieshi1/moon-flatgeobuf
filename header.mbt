@@ -20,7 +20,11 @@ fn sized_payload(data : Bytes, at : Int, limit : Int) -> Bytes raise FgbError {
 }
 
 ///|
-fn read_column(data : Bytes, at : Int, limits : Limits) -> Column raise FgbError {
+fn read_column(
+  data : Bytes,
+  at : Int,
+  limits : Limits,
+) -> Column raise FgbError {
   let t = TableView::open(data, at)
   let name = t.text(0, limits)
   if name.is_empty() {
@@ -31,11 +35,16 @@ fn read_column(data : Bytes, at : Int, limits : Limits) -> Column raise FgbError
     raise Unsupported("column type \{code}")
   }
   {
-    name, type_code: code, title: t.text(2, limits),
-    description: t.text(3, limits), width: t.int(4, fallback=-1),
-    precision: t.int(5, fallback=-1), scale: t.int(6, fallback=-1),
+    name,
+    type_code: code,
+    title: t.text(2, limits),
+    description: t.text(3, limits),
+    width: t.int(4, fallback=-1),
+    precision: t.int(5, fallback=-1),
+    scale: t.int(6, fallback=-1),
     nullable: t.byte(7, fallback=1) != 0,
-    unique: t.byte(8) != 0, primary_key: t.byte(9) != 0,
+    unique: t.byte(8) != 0,
+    primary_key: t.byte(9) != 0,
     metadata: t.text(10, limits),
   }
 }
@@ -44,14 +53,20 @@ fn read_column(data : Bytes, at : Int, limits : Limits) -> Column raise FgbError
 fn read_crs(data : Bytes, at : Int, limits : Limits) -> Crs raise FgbError {
   let t = TableView::open(data, at)
   {
-    org: t.text(0, limits), code: t.int(1), name: t.text(2, limits),
-    description: t.text(3, limits), wkt: t.text(4, limits),
+    org: t.text(0, limits),
+    code: t.int(1),
+    name: t.text(2, limits),
+    description: t.text(3, limits),
+    wkt: t.text(4, limits),
     code_string: t.text(5, limits),
   }
 }
 
 ///|
-pub fn decode_header(data : Bytes, limits? : Limits = Limits::default()) -> Header raise FgbError {
+pub fn decode_header(
+  data : Bytes,
+  limits? : Limits = Limits::default(),
+) -> Header raise FgbError {
   limits.validate()
   let payload = sized_payload(data, 0, limits.max_header_bytes)
   if payload.length() + 4 != data.length() {
@@ -65,7 +80,7 @@ pub fn decode_header(data : Bytes, limits? : Limits = Limits::default()) -> Head
   }
   let columns : Array[Column] = []
   let (start, count) = t.vector(7, 4, limits.max_columns)
-  let names : Map[String, Bool] = {}
+  let names : Map[String, Bool] = Map([])
   for i in 0..<count {
     let column = read_column(payload, indirect(payload, start + i * 4), limits)
     if names.contains(column.name) {
@@ -97,10 +112,19 @@ pub fn decode_header(data : Bytes, limits? : Limits = Limits::default()) -> Head
   }
   let crs_at = t.reference(10)
   {
-    name: t.text(0, limits), geometry_kind: kind_from_code(t.byte(2)),
-    columns, features_count, index_node_size: node_size, envelope,
-    crs: if crs_at == 0 { None } else { Some(read_crs(payload, crs_at, limits)) },
-    title: t.text(11, limits), description: t.text(12, limits),
+    name: t.text(0, limits),
+    geometry_kind: kind_from_code(t.byte(2)),
+    columns,
+    features_count,
+    index_node_size: node_size,
+    envelope,
+    crs: if crs_at == 0 {
+      None
+    } else {
+      Some(read_crs(payload, crs_at, limits))
+    },
+    title: t.text(11, limits),
+    description: t.text(12, limits),
     metadata: t.text(13, limits),
   }
 }
@@ -141,9 +165,12 @@ fn write_crs(b : FbBuilder, crs : Crs) -> Int {
 }
 
 ///|
-pub fn encode_header(header : Header, limits? : Limits = Limits::default()) -> Bytes raise FgbError {
+pub fn encode_header(
+  header : Header,
+  limits? : Limits = Limits::default(),
+) -> Bytes raise FgbError {
   limits.validate()
-  validate_header(header, limits=limits)
+  validate_header(header, limits~)
   let b = FbBuilder::new()
   let table = b.table(14)
   b.text(table, 0, header.name)
@@ -184,14 +211,19 @@ pub fn encode_header(header : Header, limits? : Limits = Limits::default()) -> B
 }
 
 ///|
-pub fn validate_header(header : Header, limits? : Limits = Limits::default()) -> Unit raise FgbError {
-  if header.features_count < 0 || header.index_node_size < 0 ||
-    header.index_node_size > 65535 || header.index_node_size == 1 {
+pub fn validate_header(
+  header : Header,
+  limits? : Limits = Limits::default(),
+) -> Unit raise FgbError {
+  if header.features_count < 0 ||
+    header.index_node_size < 0 ||
+    header.index_node_size > 65535 ||
+    header.index_node_size == 1 {
     raise InvalidArgument("invalid feature count or index node size")
   }
   enforce(header.features_count, limits.max_features, "feature count")
   enforce(header.columns.length(), limits.max_columns, "column count")
-  let seen : Map[String, Bool] = {}
+  let seen : Map[String, Bool] = Map([])
   for column in header.columns {
     if column.name.is_empty() || seen.contains(column.name) {
       raise InvalidArgument("empty or duplicate column name")
@@ -200,7 +232,11 @@ pub fn validate_header(header : Header, limits? : Limits = Limits::default()) ->
       raise Unsupported("column type \{column.type_code}")
     }
     seen[column.name] = true
-    enforce(@utf8.encode(column.name).length(), limits.max_string_bytes, "column name")
+    enforce(
+      @utf8.encode(column.name).length(),
+      limits.max_string_bytes,
+      "column name",
+    )
   }
   match header.envelope {
     Some(bounds) => bounds.validate()

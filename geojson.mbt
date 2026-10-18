@@ -42,7 +42,11 @@ fn coordinate_json(coordinate : Coordinate) -> Json {
 }
 
 ///|
-fn coordinates_json(coordinates : Array[Coordinate], start : Int, end : Int) -> Json {
+fn coordinates_json(
+  coordinates : Array[Coordinate],
+  start : Int,
+  end : Int,
+) -> Json {
   let items : Array[Json] = []
   for i in start..<end {
     items.push(coordinate_json(coordinates[i]))
@@ -71,10 +75,9 @@ pub fn Geometry::to_geojson(self : Geometry) -> Json raise FgbError {
     MultiPolygon => Json::array(self.parts.map(part => parts_json(part)))
     Unknown => raise InvalidArgument("cannot export Unknown geometry")
   }
-  Json::object(Map([
-    ("type", Json::string(self.kind.name())),
-    ("coordinates", coordinates),
-  ]))
+  Json::object(
+    Map([("type", Json::string(self.kind.name())), ("coordinates", coordinates)]),
+  )
 }
 
 ///|
@@ -83,11 +86,15 @@ fn parse_coordinate(value : Json) -> Coordinate raise FgbError {
   if pair.length() != 2 {
     raise Unsupported("only 2D GeoJSON coordinate pairs are supported")
   }
-  { x: json_number(pair[0]), y: json_number(pair[1]) }
+  { x: json_number(pair[0]), y: json_number(pair[1]), }
 }
 
 ///|
-fn parse_coordinates(value : Json, limits : Limits, budget : Ref[Int]) -> Array[Coordinate] raise FgbError {
+fn parse_coordinates(
+  value : Json,
+  limits : Limits,
+  budget : Ref[Int],
+) -> Array[Coordinate] raise FgbError {
   let values = json_array(value)
   budget.val = checked_add(budget.val, values.length())
   enforce(budget.val, limits.max_coordinates, "GeoJSON coordinates")
@@ -99,7 +106,12 @@ fn parse_coordinates(value : Json, limits : Limits, budget : Ref[Int]) -> Array[
 }
 
 ///|
-fn parse_parts(value : Json, kind : GeometryKind, limits : Limits, budget : Ref[Int]) -> Geometry raise FgbError {
+fn parse_parts(
+  value : Json,
+  kind : GeometryKind,
+  limits : Limits,
+  budget : Ref[Int],
+) -> Geometry raise FgbError {
   let parts = json_array(value)
   enforce(parts.length(), limits.max_coordinates, "GeoJSON part count")
   let xy : Array[Coordinate] = []
@@ -111,27 +123,38 @@ fn parse_parts(value : Json, kind : GeometryKind, limits : Limits, budget : Ref[
     }
     ends.push(xy.length())
   }
-  { kind, xy, ends, parts: [] }
+  { kind, xy, ends, parts: [], }
 }
 
 ///|
-pub fn geometry_from_geojson(value : Json, limits? : Limits = Limits::default()) -> Geometry raise FgbError {
+pub fn geometry_from_geojson(
+  value : Json,
+  limits? : Limits = Limits::default(),
+) -> Geometry raise FgbError {
   limits.validate()
   let kind = json_text(json_field(value, "type"))
   let coordinates = json_field(value, "coordinates")
-  let budget = Ref::new(0)
+  let budget = Ref(0)
   let geometry : Geometry = match kind {
-    "Point" => {
-      kind: Point, xy: [parse_coordinate(coordinates)], ends: [], parts: [],
-    }
-    "LineString" => {
-      kind: LineString, xy: parse_coordinates(coordinates, limits, budget), ends: [], parts: [],
-    }
-    "MultiPoint" => {
-      kind: MultiPoint, xy: parse_coordinates(coordinates, limits, budget), ends: [], parts: [],
-    }
+    "Point" =>
+      { kind: Point, xy: [parse_coordinate(coordinates)], ends: [], parts: [], }
+    "LineString" =>
+      {
+        kind: LineString,
+        xy: parse_coordinates(coordinates, limits, budget),
+        ends: [],
+        parts: [],
+      }
+    "MultiPoint" =>
+      {
+        kind: MultiPoint,
+        xy: parse_coordinates(coordinates, limits, budget),
+        ends: [],
+        parts: [],
+      }
     "Polygon" => parse_parts(coordinates, Polygon, limits, budget)
-    "MultiLineString" => parse_parts(coordinates, MultiLineString, limits, budget)
+    "MultiLineString" =>
+      parse_parts(coordinates, MultiLineString, limits, budget)
     "MultiPolygon" => {
       let values = json_array(coordinates)
       enforce(values.length(), limits.max_coordinates, "GeoJSON polygon count")
@@ -139,11 +162,11 @@ pub fn geometry_from_geojson(value : Json, limits? : Limits = Limits::default())
       for polygon in values {
         parts.push(parse_parts(polygon, Polygon, limits, budget))
       }
-      { kind: MultiPolygon, xy: [], ends: [], parts }
+      { kind: MultiPolygon, xy: [], ends: [], parts, }
     }
     _ => raise Unsupported("GeoJSON geometry \{kind}")
   }
-  geometry.validate(limits=limits)
+  geometry.validate(limits~)
   geometry
 }
 
@@ -156,12 +179,20 @@ pub fn Property::to_json_value(self : Property) -> Json {
     Unsigned(n) => Json::number(n.to_double(), repr=n.to_string())
     Real(n) => Json::number(n)
     Text(text) => Json::string(text)
-    Binary(data) => Json::array(Array::makei(data.length(), i => Json::number(data[i].to_int().to_double())))
+    Binary(data) =>
+      Json::array(
+        Array::makei(data.length(), i => {
+          Json::number(data[i].to_int().to_double())
+        }),
+      )
   }
 }
 
 ///|
-pub fn Feature::to_geojson(self : Feature, header : Header) -> Json raise FgbError {
+pub fn Feature::to_geojson(
+  self : Feature,
+  header : Header,
+) -> Json raise FgbError {
   if self.properties.length() != header.columns.length() {
     raise InvalidArgument("feature property count differs from schema")
   }
@@ -170,7 +201,10 @@ pub fn Feature::to_geojson(self : Feature, header : Header) -> Json raise FgbErr
     let column = header.columns[i]
     let value = if column.type_code == 12 {
       match self.properties[i] {
-        Text(text) => try @json.parse(text) catch { _ => raise InvalidArgument("invalid JSON property") }
+        Text(text) =>
+          @json.parse(text) catch {
+            _ => raise InvalidArgument("invalid JSON property")
+          }
         Null => Json::null()
         _ => raise InvalidArgument("JSON column must contain text or null")
       }
@@ -179,38 +213,57 @@ pub fn Feature::to_geojson(self : Feature, header : Header) -> Json raise FgbErr
     }
     properties[column.name] = value
   }
-  Json::object(Map([
-    ("type", Json::string("Feature")),
-    ("geometry", match self.geometry {
-      None => Json::null()
-      Some(g) => g.to_geojson()
-    }),
-    ("properties", Json::object(properties)),
-  ]))
+  Json::object(
+    Map([
+      ("type", Json::string("Feature")),
+      (
+        "geometry",
+        match self.geometry {
+          None => Json::null()
+          Some(g) => g.to_geojson()
+        },
+      ),
+      ("properties", Json::object(properties)),
+    ]),
+  )
 }
 
 ///|
-pub fn Dataset::to_geojson(self : Dataset, allow_projected? : Bool = false) -> Json raise FgbError {
+pub fn Dataset::to_geojson(
+  self : Dataset,
+  allow_projected? : Bool = false,
+) -> Json raise FgbError {
   match self.header.crs {
-    Some(crs) => {
-      if !allow_projected && (crs.code != 4326 || (crs.org != "" && crs.org != "EPSG" && crs.org != "epsg")) {
-        raise InvalidArgument("GeoJSON export requires EPSG:4326 or explicit allow_projected")
+    Some(crs) =>
+      if !allow_projected &&
+        (
+          crs.code != 4326 ||
+          (crs.org != "" && crs.org != "EPSG" && crs.org != "epsg")
+        ) {
+        raise InvalidArgument(
+          "GeoJSON export requires EPSG:4326 or explicit allow_projected",
+        )
       }
-    }
     None => ()
   }
   let features : Array[Json] = []
   for feature in self.features {
     features.push(feature.to_geojson(self.header))
   }
-  Json::object(Map([
-    ("type", Json::string("FeatureCollection")),
-    ("features", Json::array(features)),
-  ]))
+  Json::object(
+    Map([
+      ("type", Json::string("FeatureCollection")),
+      ("features", Json::array(features)),
+    ]),
+  )
 }
 
 ///|
-fn property_from_json(value : Json, column : Column, limits : Limits) -> Property raise FgbError {
+fn property_from_json(
+  value : Json,
+  column : Column,
+  limits : Limits,
+) -> Property raise FgbError {
   if value == Json::null() {
     if !column.nullable {
       raise InvalidArgument("null non-nullable GeoJSON property \{column.name}")
@@ -220,15 +273,21 @@ fn property_from_json(value : Json, column : Column, limits : Limits) -> Propert
   let result : Property = match column.type_code {
     0 | 3 | 5 | 7 => {
       json_number(value) |> ignore
-      let n : Int64 = try @json.from_json(Json::string(value.stringify())) catch {
-        _ => raise InvalidArgument("expected exact signed integer for \{column.name}")
+      let n : Int64 = @json.from_json(Json::string(value.stringify())) catch {
+        _ =>
+          raise InvalidArgument(
+            "expected exact signed integer for \{column.name}",
+          )
       }
       Integer(n)
     }
     1 | 4 | 6 | 8 => {
       json_number(value) |> ignore
-      let n : UInt64 = try @json.from_json(Json::string(value.stringify())) catch {
-        _ => raise InvalidArgument("expected exact unsigned integer for \{column.name}")
+      let n : UInt64 = @json.from_json(Json::string(value.stringify())) catch {
+        _ =>
+          raise InvalidArgument(
+            "expected exact unsigned integer for \{column.name}",
+          )
       }
       Unsigned(n)
     }
@@ -247,7 +306,9 @@ fn property_from_json(value : Json, column : Column, limits : Limits) -> Propert
       let bytes : Array[Byte] = []
       for item in array {
         let number = json_number(item)
-        if number < 0.0 || number > 255.0 || number != number.to_int().to_double() {
+        if number < 0.0 ||
+          number > 255.0 ||
+          number != number.to_int().to_double() {
           raise InvalidArgument("binary JSON array needs unsigned bytes")
         }
         bytes.push(number.to_int().to_byte())
@@ -262,7 +323,11 @@ fn property_from_json(value : Json, column : Column, limits : Limits) -> Propert
 }
 
 ///|
-pub fn feature_from_geojson(value : Json, header : Header, limits? : Limits = Limits::default()) -> Feature raise FgbError {
+pub fn feature_from_geojson(
+  value : Json,
+  header : Header,
+  limits? : Limits = Limits::default(),
+) -> Feature raise FgbError {
   if json_text(json_field(value, "type")) != "Feature" {
     raise InvalidArgument("GeoJSON item must be Feature")
   }
@@ -270,7 +335,7 @@ pub fn feature_from_geojson(value : Json, header : Header, limits? : Limits = Li
   let geometry = if geometry_json == Json::null() {
     None
   } else {
-    Some(geometry_from_geojson(geometry_json, limits=limits))
+    Some(geometry_from_geojson(geometry_json, limits~))
   }
   match geometry {
     Some(g) if header.geometry_kind != Unknown && header.geometry_kind != g.kind =>
@@ -294,13 +359,17 @@ pub fn feature_from_geojson(value : Json, header : Header, limits? : Limits = Li
       raise InvalidArgument("GeoJSON property absent from schema: \{name}")
     }
   }
-  { geometry, properties }
+  { geometry, properties, }
 }
 
 ///|
-pub fn dataset_from_geojson(value : Json, header : Header, limits? : Limits = Limits::default()) -> Dataset raise FgbError {
+pub fn dataset_from_geojson(
+  value : Json,
+  header : Header,
+  limits? : Limits = Limits::default(),
+) -> Dataset raise FgbError {
   limits.validate()
-  validate_header(header, limits=limits)
+  validate_header(header, limits~)
   if json_text(json_field(value, "type")) != "FeatureCollection" {
     raise InvalidArgument("expected GeoJSON FeatureCollection")
   }
@@ -308,7 +377,7 @@ pub fn dataset_from_geojson(value : Json, header : Header, limits? : Limits = Li
   enforce(values.length(), limits.max_features, "GeoJSON features")
   let features : Array[Feature] = []
   for item in values {
-    features.push(feature_from_geojson(item, header, limits=limits))
+    features.push(feature_from_geojson(item, header, limits~))
   }
-  { header, features }
+  { header, features, }
 }

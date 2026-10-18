@@ -8,8 +8,10 @@ pub(all) struct Bounds {
 
 ///|
 pub fn Bounds::validate(self : Bounds) -> Unit raise FgbError {
-  if !finite(self.min_x) || !finite(self.min_y) ||
-    !finite(self.max_x) || !finite(self.max_y) {
+  if !finite(self.min_x) ||
+    !finite(self.min_y) ||
+    !finite(self.max_x) ||
+    !finite(self.max_y) {
     raise InvalidArgument("bounds must be finite")
   }
   if self.min_x > self.max_x || self.min_y > self.max_y {
@@ -19,23 +21,27 @@ pub fn Bounds::validate(self : Bounds) -> Unit raise FgbError {
 
 ///|
 pub fn Bounds::intersects(self : Bounds, other : Bounds) -> Bool {
-  self.min_x <= other.max_x && self.max_x >= other.min_x &&
-  self.min_y <= other.max_y && self.max_y >= other.min_y
+  self.min_x <= other.max_x &&
+  self.max_x >= other.min_x &&
+  self.min_y <= other.max_y &&
+  self.max_y >= other.min_y
 }
 
 ///|
 pub fn Bounds::contains(self : Bounds, other : Bounds) -> Bool {
-  self.min_x <= other.min_x && self.min_y <= other.min_y &&
-  self.max_x >= other.max_x && self.max_y >= other.max_y
+  self.min_x <= other.min_x &&
+  self.min_y <= other.min_y &&
+  self.max_x >= other.max_x &&
+  self.max_y >= other.max_y
 }
 
 ///|
 pub fn Bounds::union(self : Bounds, other : Bounds) -> Bounds {
   {
-    min_x: @math.minimum(self.min_x, other.min_x),
-    min_y: @math.minimum(self.min_y, other.min_y),
-    max_x: @math.maximum(self.max_x, other.max_x),
-    max_y: @math.maximum(self.max_y, other.max_y),
+    min_x: @cmp.minimum(self.min_x, other.min_x),
+    min_y: @cmp.minimum(self.min_y, other.min_y),
+    max_x: @cmp.maximum(self.max_x, other.max_x),
+    max_y: @cmp.maximum(self.max_y, other.max_y),
   }
 }
 
@@ -106,7 +112,7 @@ pub(all) struct Geometry {
 
 ///|
 pub fn Geometry::point(x : Double, y : Double) -> Geometry {
-  { kind: Point, xy: [{ x, y }], ends: [], parts: [] }
+  { kind: Point, xy: [{ x, y, }], ends: [], parts: [], }
 }
 
 ///|
@@ -125,11 +131,23 @@ pub(all) struct Column {
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
-pub fn Column::new(name : String, type_code : Int, nullable? : Bool = true) -> Column {
+pub fn Column::new(
+  name : String,
+  type_code : Int,
+  nullable? : Bool = true,
+) -> Column {
   {
-    name, type_code, nullable,
-    title: "", description: "", width: -1, precision: -1, scale: -1,
-    unique: false, primary_key: false, metadata: "",
+    name,
+    type_code,
+    nullable,
+    title: "",
+    description: "",
+    width: -1,
+    precision: -1,
+    scale: -1,
+    unique: false,
+    primary_key: false,
+    metadata: "",
   }
 }
 
@@ -178,7 +196,7 @@ pub(all) struct Crs {
 
 ///|
 pub fn Crs::epsg(code : Int) -> Crs {
-  { org: "EPSG", code, name: "", description: "", wkt: "", code_string: "" }
+  { org: "EPSG", code, name: "", description: "", wkt: "", code_string: "", }
 }
 
 ///|
@@ -198,9 +216,16 @@ pub(all) struct Header {
 ///|
 pub fn Header::new(kind : GeometryKind, columns : Array[Column]) -> Header {
   {
-    name: "", geometry_kind: kind, columns, features_count: 0,
-    index_node_size: 0, envelope: None, crs: None,
-    title: "", description: "", metadata: "",
+    name: "",
+    geometry_kind: kind,
+    columns,
+    features_count: 0,
+    index_node_size: 0,
+    envelope: None,
+    crs: None,
+    title: "",
+    description: "",
+    metadata: "",
   }
 }
 
