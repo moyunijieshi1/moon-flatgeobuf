@@ -1,0 +1,26 @@
+name: FlatGeobuf verification
+on: [push, pull_request]
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '24'
+          cache: npm
+      - name: Install official MoonBit toolchain
+        run: |
+          curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
+          echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
+      - run: moon version
+      - run: moon fmt --check
+      - run: moon check --target all --deny-warn
+      - run: moon build --target all --deny-warn
+      - run: moon test --target all --deny-warn
+      - run: moon run examples/basic --target js
+      - run: npm ci --ignore-scripts
+      - run: node scripts/interop.cjs
+      - run: node scripts/http-test.cjs
+      - run: python3 scripts/count-lines.py
+      - run: moon info && git diff --exit-code -- '*.mbti'
