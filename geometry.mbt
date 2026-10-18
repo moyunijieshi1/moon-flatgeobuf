@@ -141,7 +141,7 @@ fn read_geometry(data : Bytes, at : Int, kind : GeometryKind, limits : Limits, d
   budget.val = checked_add(budget.val, xy_count / 2)
   enforce(budget.val, limits.max_coordinates, "total coordinates")
   let xy : Array[Coordinate] = []
-  for i in 0..<xy_count / 2 {
+  for i in 0..<(xy_count / 2) {
     xy.push({ x: f64(data, xy_at + i * 16), y: f64(data, xy_at + i * 16 + 8) })
   }
   let (ends_at, ends_count) = table.vector(0, 4, limits.max_coordinates)
