@@ -1,0 +1,11 @@
+{
+  "name": "moon-flatgeobuf-tools",
+  "private": true,
+  "description": "Independent interoperability checks and Node.js I/O host for the MoonBit codec",
+  "scripts": {
+    "test:interop": "node scripts/interop.cjs"
+  },
+  "devDependencies": {
+    "flatgeobuf": "4.4.0"
+  }
+}

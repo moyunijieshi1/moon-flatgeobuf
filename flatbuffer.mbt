@@ -198,6 +198,7 @@ fn FbBuilder::vector(self : FbBuilder, count : Int, width : Int) -> Int {
 
 ///|
 fn FbBuilder::finish(self : FbBuilder, root : Int) -> Bytes {
+  self.writer.align(8)
   self.writer.patch_word(4, root - 4)
   self.writer.patch_word(0, self.writer.position() - 4)
   self.writer.finish()
