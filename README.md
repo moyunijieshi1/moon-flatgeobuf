@@ -9,6 +9,10 @@ or load only the matching features from an object-storage archive.
 
 ## Install
 
+Version 0.1.0 is prepared. Mooncakes publication is pending owner registration
+and login; the command below applies after publication. Until then, clone this
+repository and run the included example or CLI directly.
+
 ```sh
 moon add moyunijieshi1/moon-flatgeobuf
 ```

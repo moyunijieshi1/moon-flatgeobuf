@@ -49,6 +49,6 @@ rejected with structured diagnostics and there were no uncaught parser failures.
 Some byte mutations remain valid by design. This is regression evidence, not a
 proof of arbitrary-input safety or a substitute for future fuzzing.
 
-All-backend native verification and interface drift checking run in GitHub
-Actions. Refer to the exact successful workflow associated with a commit before
-asserting a native pass. Test results must be rerun after changes.
+All four backends and interface drift checks passed for commit 54e4388 in
+https://github.com/moyunijieshi1/moon-flatgeobuf/actions/runs/39126580506 .
+Test results must be rerun after changes.
