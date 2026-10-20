@@ -1,3 +1,28 @@
+# Mooncakes release 0.2.0
+
+Published successfully on 2026-10-20. The official publisher verified the
+extracted archive and returned `Server status: 200 OK`.
+
+- Package: https://mooncakes.io/docs/moyunijieshi1/moon-flatgeobuf
+- Release source commit: 1776ff9
+- Successful CI: https://github.com/moyunijieshi1/moon-flatgeobuf/actions/runs/39440876831
+- All four backends passed 32 tests each; 42 official interoperability comparisons passed.
+- Real HTTP range and 3226 malformed-input cases passed. Implementation count: 4191 lines.
+
+A new consumer directory installed `moyunijieshi1/moon-flatgeobuf@0.2.0`
+from the public registry, with no local path dependency. It constructed nested
+GeometryCollections with an empty child, wrote and validated an indexed file,
+queried the bounds, compared the complete geometry and round-tripped GeoJSON.
+
+```text
+Published 0.2.0 passed: nested/empty collection, binary validation, indexed query and GeoJSON round trip.
+```
+
+This release implements the documented XY profile. The full fixed-baseline
+1.0 goal is still pending; see [COMPATIBILITY.md](../COMPATIBILITY.md).
+
+---
+
 # Mooncakes release 0.1.0
 
 Published successfully on 2026-10-18 as:

@@ -1,3 +1,18 @@
+# Current acceptance: 0.2.0 (2026-10-20)
+
+Release source: 1776ff9. All four backends passed 32 tests each; 42 independent
+comparisons, HTTP range verification, malformed-input audit and baseline hash
+checks passed. CI: https://github.com/moyunijieshi1/moon-flatgeobuf/actions/runs/39440876831
+
+0.2.0 was published and independently installed from Mooncakes; see
+[REGISTRY_RELEASE.md](REGISTRY_RELEASE.md). This is the bounded XY profile, not
+full format compatibility. [The versioned contract](../COMPATIBILITY.md)
+records the fixed baseline, remaining gaps and final acceptance conditions.
+
+The older snapshot below is retained as historical evidence only.
+
+---
+
 # Acceptance snapshot
 
 Date: 2026-10-18.
