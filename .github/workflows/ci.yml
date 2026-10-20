@@ -20,6 +20,7 @@ jobs:
       - run: moon test --target all --deny-warn
       - run: moon run examples/basic --target js
       - run: npm ci --ignore-scripts
+      - run: node scripts/check-baseline.cjs
       - run: node scripts/interop.cjs
       - run: node scripts/http-test.cjs
       - run: node scripts/malformed.cjs

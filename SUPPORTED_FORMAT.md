@@ -1,5 +1,10 @@
 # Supported format
 
+Fixed file-format baseline: **3.0.1**; this is different from the pinned oracle
+library version 4.4.0. See COMPATIBILITY.md for the exact upstream commit,
+machine-checked hashes, complete matrix and final compatibility milestone.
+Release 0.2.0 implements a restricted XY profile, not the whole baseline.
+
 ## Files and addressing
 
 FlatGeobuf major version 3 magic is required; compatible patch bytes are accepted.
@@ -22,18 +27,26 @@ wraps large file offsets. `Limits` exposes lower application-specific budgets.
 ## Geometry
 
 Supported: nonempty 2D Point, MultiPoint, LineString, MultiLineString, Polygon,
-MultiPolygon. Polygon rings must be closed and have at least four coordinates;
+MultiPolygon, plus mixed/nested/empty GeometryCollection. Polygon rings must be closed and have at least four coordinates;
 this checks representation, not self-intersection, winding or full topology.
 MultiPolygon uses Polygon parts. Mixed supported types use Unknown in the
 header and concrete types per feature. Null geometries are accepted without an
-index; indexed output rejects them. Empty non-null geometries are rejected.
+index; indexed output rejects them. Empty GeometryCollection is retained in
+unindexed files and explicitly rejected by indexed writing because it has no
+finite bounds. Other empty non-null geometries remain unsupported.
 
-Coordinates must be finite. Z/M/T/TM, collections, curves and all other type
+Coordinates must be finite. Z/M/T/TM, curves and all other unsupported type
 codes are rejected. CRS fields are preserved; no projection conversion occurs.
 GeoJSON export rejects a declared non-EPSG:4326 CRS unless `allow_projected` is
 explicitly set. A missing CRS is treated as caller-owned coordinate semantics;
 `Header::validate_geojson_crs` offers a stricter opt-in check. GeoJSON import
 defaults to EPSG:4326. `Geometry::validate_wgs84` checks coordinate ranges.
+
+GeometryCollection uses its `parts` recursively, and each child must have a
+concrete type. Collection parents cannot carry xy/ends. GeoJSON uses the
+`geometries` member rather than coordinates. Depth, coordinate count and
+max_geometry_nodes budgets cover the whole feature, so many empty children
+cannot bypass limits. Default max_geometry_nodes is 100000 per feature.
 
 ## Properties
 

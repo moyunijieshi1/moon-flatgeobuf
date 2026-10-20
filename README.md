@@ -7,6 +7,11 @@ incremental streams, and a transport-independent HTTP Range query state machine.
 Use it to exchange `.fgb` files with existing GIS tools, select a local region,
 or load only the matching features from an object-storage archive.
 
+Version 0.2.0 targets a bounded XY linear profile of **format 3.0.1**, including
+nested GeometryCollection. It does not claim complete format interoperability.
+[COMPATIBILITY.md](COMPATIBILITY.md) fixes the schema commit, reference version,
+current matrix and final 1.0.0 complete-compatibility acceptance gates.
+
 ## Install
 
 ```sh
@@ -69,8 +74,9 @@ response validation, and query state transitions are implemented in MoonBit.
 
 ## Scope
 
-- Six 2D families: Point, MultiPoint, LineString, MultiLineString, Polygon,
-  MultiPolygon; null geometries in unindexed files.
+- Seven 2D families: Point, MultiPoint, LineString, MultiLineString, Polygon,
+  MultiPolygon and mixed/nested/empty GeometryCollection; null geometries and
+  empty collections are preserved in unindexed files.
 - All 15 standard attribute types; Int64/UInt64 remain exact in the MoonBit API.
 - Header, column and CRS metadata; fixed dataset-wide schemas.
 - Sequential, ordinal and indexed bounding-box access; field projection,
@@ -82,7 +88,7 @@ response validation, and query state transitions are implemented in MoonBit.
 
 Bounding-box matches are **candidates**, not exact polygon intersections. The
 library does not reproject coordinates or render maps. Z/M/T/TM, geometry
-collections, curve geometries and per-feature schemas are explicitly unsupported.
+curve geometries and per-feature schemas are explicitly unsupported.
 Offsets use a bounded Int32 address space. Defaults cap files at 1 GiB and
 features at 16 MiB; see `Limits` and [SUPPORTED_FORMAT.md](SUPPORTED_FORMAT.md).
 
@@ -99,6 +105,7 @@ moon build --target all --deny-warn
 moon test --target all --deny-warn
 moon run examples/basic --target js
 npm ci --ignore-scripts
+node scripts/check-baseline.cjs
 node scripts/interop.cjs
 node scripts/http-test.cjs
 node scripts/malformed.cjs

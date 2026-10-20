@@ -1,0 +1,20 @@
+{
+  "format": "FlatGeobuf",
+  "format_version": "3.0.1",
+  "magic_hex": "6667620366676201",
+  "upstream_repository": "https://github.com/flatgeobuf/flatgeobuf",
+  "upstream_tag": "ts-4.4.0",
+  "upstream_commit": "3df4db1a9551821f66a1d789bb8632c8076926be",
+  "oracle_npm_package": "flatgeobuf",
+  "oracle_npm_version": "4.4.0",
+  "oracle_integrity": "sha512-uUt1xxywP+q8K73MmyKtapF4++dMCzvoqH+ojBTsCtZBbnQEg5qy0Ujze61Rwmpmt6Ra526jpRFHtEkFun5YVw==",
+  "snapshot_sha256": {
+    "header.fbs": "dfe4f97b1a7e8f447b4b7849757325c7b285a8dc146c3a30dbf82198cdb46be0",
+    "feature.fbs": "5bb05a68da45f52d3e34a97b47120bddf8b62ce58400299bd4842cf680ee4d7c",
+    "format-changelog.md": "01bc59a8d68ed3720475a077b846eece59ea57b8592d082e589c7f2959a1ebee",
+    "LICENSE": "82b5250889974b120ef38428a73982e1d1054ea778e2b54312d8721ead5bfd93"
+  },
+  "current_release_scope": "0.2.0 XY linear geometry profile with bounded nested GeometryCollection",
+  "final_compatibility_milestone": "1.0.0 complete fixed-baseline schema interoperability within explicit resource limits",
+  "final_milestone_delivered": false
+}

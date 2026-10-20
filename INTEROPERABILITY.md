@@ -1,5 +1,21 @@
 # Verification evidence
 
+## 0.2.0 update on 2026-10-20
+
+The baseline is now pinned and checked by scripts/check-baseline.cjs: file format
+3.0.1, upstream schema commit 3df4db1a9551821f66a1d789bb8632c8076926be,
+official JS package 4.4.0 with locked integrity. JS and WasmGC locally pass 32
+core tests; scripts/interop.cjs now passes 42 independent comparisons. Added
+cases include homogeneous and mixed headers, nested GeometryCollection with
+heterogeneous children, empty collections and MultiPolygon collection members.
+Empty collections are independently exchanged without an index; indexed output
+of a geometry with no finite bounds is explicitly rejected.
+
+This evidence establishes the documented XY profile only. Curves, dimensional
+vectors and per-feature schema handling are pending in the complete baseline
+contract; the seven standard geometry families do not prove full compatibility.
+The historical 0.1.0 observations below remain dated to their original snapshot.
+
 Local results on 2026-10-18, using the October toolchain in TOOLCHAIN.md.
 
 ## Independent implementation

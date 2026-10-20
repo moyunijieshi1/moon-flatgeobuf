@@ -26,3 +26,11 @@ FlatBuffers writing is implemented directly with explicit alignment and forward
 references; no generated FlatGeobuf schema bindings are shipped. Explicit
 derived-trait exports in trait_extensions.generated.mbt are generated from this
 project's declarations and are excluded from implementation-line counts.
+
+The schema and changelog files under spec/flatgeobuf-3.0.1 are verbatim reference
+definitions from upstream tag ts-4.4.0, commit
+3df4db1a9551821f66a1d789bb8632c8076926be. Their original BSD-2-Clause license
+is retained alongside them. These are specification snapshots, not runtime
+implementation code, and do not enter the MoonBit implementation line count.
+The file-format version is 3.0.1 according to that changelog; JavaScript oracle
+4.4.0 is a separate pinned implementation release.

@@ -290,6 +290,7 @@ pub(all) enum GeometryKind {
   MultiPoint
   MultiLineString
   MultiPolygon
+  GeometryCollection
 } derive(Eq, ToJson, @debug.Debug, @json.FromJson)
 pub fn GeometryKind::code(Self) -> Int
 pub fn GeometryKind::equal(Self, Self) -> Bool
@@ -357,6 +358,7 @@ pub(all) struct Limits {
   max_features : Int
   max_columns : Int
   max_coordinates : Int
+  max_geometry_nodes : Int
   max_string_bytes : Int
   max_depth : Int
   max_index_nodes : Int
