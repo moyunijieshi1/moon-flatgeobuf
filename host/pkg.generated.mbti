@@ -6,7 +6,7 @@ import {
 }
 
 // Values
-pub fn accept_remote(@moon-flatgeobuf.RangeQuery, Int, String, String, Bytes) -> Unit raise
+pub fn accept_remote(@moon-flatgeobuf.RangeQuery, Int32, String, String, Bytes) -> Unit raise
 
 pub fn audit(Bytes) -> String raise
 
