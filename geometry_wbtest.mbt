@@ -76,6 +76,7 @@ test "six supported geometries survive FlatBuffers encoding" {
       Limits::default(),
       1,
       Ref(0),
+      Ref(0),
     )
     assert_eq(decoded, geometry)
   }

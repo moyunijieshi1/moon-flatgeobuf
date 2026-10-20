@@ -53,8 +53,11 @@ fn validate_geometry_inner(
   g : Geometry,
   limits : Limits,
   depth : Int32,
+  nodes : Ref[Int32],
 ) -> Int32 raise FgbError {
   enforce(depth, limits.max_depth, "geometry depth")
+  nodes.val = checked_add(nodes.val, 1)
+  enforce(nodes.val, limits.max_geometry_nodes, "total geometry nodes")
   enforce(g.xy.length(), limits.max_coordinates, "coordinate count")
   for coordinate in g.xy {
     if !finite(coordinate.x) || !finite(coordinate.y) {
@@ -123,12 +126,20 @@ fn validate_geometry_inner(
         }
       }
     }
+    GeometryCollection => {
+      if !g.xy.is_empty() || !g.ends.is_empty() {
+        raise InvalidArgument(
+          "GeometryCollection stores geometries in parts, not xy or ends",
+        )
+      }
+      enforce(g.parts.length(), limits.max_geometry_nodes, "collection members")
+    }
   }
   let mut count = g.xy.length()
   for child in g.parts {
     count = checked_add(
       count,
-      validate_geometry_inner(child, limits, depth + 1),
+      validate_geometry_inner(child, limits, depth + 1, nodes),
     )
     enforce(count, limits.max_coordinates, "total coordinates")
   }
@@ -141,7 +152,7 @@ pub fn Geometry::validate(
   limits~ : Limits = Limits::default(),
 ) -> Unit raise FgbError {
   limits.validate()
-  validate_geometry_inner(self, limits, 1) |> ignore
+  validate_geometry_inner(self, limits, 1, Ref(0)) |> ignore
 }
 
 ///|
@@ -152,8 +163,11 @@ fn read_geometry(
   limits : Limits,
   depth : Int32,
   budget : Ref[Int32],
+  nodes : Ref[Int32],
 ) -> Geometry raise FgbError {
   enforce(depth, limits.max_depth, "geometry depth")
+  nodes.val = checked_add(nodes.val, 1)
+  enforce(nodes.val, limits.max_geometry_nodes, "total geometry nodes")
   let table = TableView::open(data, at)
   for field in 2..<6 {
     if table.reference(field) != 0 {
@@ -184,18 +198,23 @@ fn read_geometry(
   for i in 0..<ends_count {
     ends.push(size32(data, ends_at + i * 4))
   }
-  let (parts_at, parts_count) = table.vector(7, 4, limits.max_coordinates)
+  let (parts_at, parts_count) = table.vector(7, 4, limits.max_geometry_nodes)
   let parts : Array[Geometry] = []
-  if parts_count > 0 && resolved != MultiPolygon {
-    raise Unsupported("parts on a geometry other than MultiPolygon")
+  if parts_count > 0 &&
+    resolved != MultiPolygon &&
+    resolved != GeometryCollection {
+    raise InvalidData(at, "parts require MultiPolygon or GeometryCollection")
   }
   for i in 0..<parts_count {
     let child = indirect(data, parts_at + i * 4)
-    parts.push(read_geometry(data, child, Polygon, limits, depth + 1, budget))
+    let child_kind = if resolved == MultiPolygon { Polygon } else { Unknown }
+    parts.push(
+      read_geometry(data, child, child_kind, limits, depth + 1, budget, nodes),
+    )
   }
   let result : Geometry = { kind: resolved, xy, ends, parts, }
   // Validation here checks shape rules without trusting the binary representation.
-  validate_geometry_inner(result, limits, depth) |> ignore
+  validate_geometry_inner(result, limits, depth, Ref(0)) |> ignore
   result
 }
 

@@ -13,17 +13,22 @@ async function main() {
     [{type:'Feature',geometry:polygon,properties:{name:'区域'}}, {type:'Feature',geometry:{type:'MultiPolygon',coordinates:[polygon.coordinates]},properties:{name:'多区域'}}],
     [{type:'Feature',geometry:{type:'MultiLineString',coordinates:[[[0,0],[1,1]],[[4,4],[5,5]]]},properties:{name:'道路'}}],
     [{type:'Feature',geometry:{type:'MultiPoint',coordinates:[[1,2],[3,4]]},properties:{name:null}}],
+    [{type:'Feature',geometry:{type:'GeometryCollection',geometries:[point(-2),{type:'LineString',coordinates:[[0,0],[9,4]]},{type:'GeometryCollection',geometries:[point(10),{type:'MultiPolygon',coordinates:[polygon.coordinates]},{type:'GeometryCollection',geometries:[]}]}]},properties:{name:'嵌套集合'}}],
+    [{type:'Feature',geometry:{type:'GeometryCollection',geometries:[]},properties:{name:'空集合'}}],
+    [{type:'Feature',geometry:{type:'GeometryCollection',geometries:[point(2),polygon]},properties:{name:'混合集合'}},{type:'Feature',geometry:point(50),properties:{name:'普通点'}}],
   ];
   let checks = 0;
   for (const features of inputs) {
     const collection = {type:'FeatureCollection',features};
-    for (const indexed of [false,true]) {
+    const emptyCollection=features.every(f=>f.geometry.type==='GeometryCollection'&&f.geometry.geometries.length===0);
+    for (const indexed of emptyCollection?[false]:[false,true]) {
       const own = api.encode(JSON.stringify(collection), indexed);
       assert.equal(api.audit(own),'ok');
       const decoded = await Array.fromAsync(official.deserialize(own));
       assert.equal(decoded.length,features.length);
       // FlatGeobuf omits null properties; official JS exposes them as missing keys.
-      const canonical = values => values.map(x=>JSON.stringify({geometry:x.geometry,properties:Object.fromEntries(Object.entries(x.properties).filter(([,v])=>v!==null).sort(([a],[b])=>a.localeCompare(b)))})).sort();
+      const ordered=value=>Array.isArray(value)?value.map(ordered):value&&typeof value==='object'?Object.fromEntries(Object.keys(value).sort().map(k=>[k,ordered(value[k])])):value;
+      const canonical = values => values.map(x=>JSON.stringify(ordered({geometry:x.geometry,properties:Object.fromEntries(Object.entries(x.properties).filter(([,v])=>v!==null))}))).sort();
       assert.deepEqual(canonical(decoded),canonical(features));
       const their = official.serialize(collection);
       const theirsRead = JSON.parse(api.decode(their));

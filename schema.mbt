@@ -89,6 +89,7 @@ pub fn infer_geojson_header(
         "MultiPoint" => MultiPoint
         "MultiLineString" => MultiLineString
         "MultiPolygon" => MultiPolygon
+        "GeometryCollection" => GeometryCollection
         other => raise Unsupported("GeoJSON geometry \{other}")
       }
       if geometry_seen && geometry_kind != kind {

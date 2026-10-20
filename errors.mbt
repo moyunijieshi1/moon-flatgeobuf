@@ -13,6 +13,7 @@ pub(all) struct Limits {
   max_features : Int32
   max_columns : Int32
   max_coordinates : Int32
+  max_geometry_nodes : Int32
   max_string_bytes : Int32
   max_depth : Int32
   max_index_nodes : Int32
@@ -27,6 +28,7 @@ pub fn Limits::default() -> Limits {
     max_features: 1000000,
     max_columns: 1024,
     max_coordinates: 1000000,
+    max_geometry_nodes: 100000,
     max_string_bytes: 1048576,
     max_depth: 32,
     max_index_nodes: 2000000,
@@ -45,8 +47,12 @@ pub fn Limits::validate(self : Limits) -> Unit raise FgbError {
   if self.max_columns > 65536 {
     raise InvalidArgument("column limit exceeds unsigned 16-bit keys")
   }
-  if self.max_coordinates < 1 || self.max_string_bytes < 1 {
-    raise InvalidArgument("coordinate and string limits must be positive")
+  if self.max_coordinates < 1 ||
+    self.max_geometry_nodes < 1 ||
+    self.max_string_bytes < 1 {
+    raise InvalidArgument(
+      "coordinate, geometry-node and string limits must be positive",
+    )
   }
   if self.max_depth < 1 || self.max_depth > 256 {
     raise InvalidArgument("depth limit must be between 1 and 256")

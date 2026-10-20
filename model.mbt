@@ -60,6 +60,7 @@ pub(all) enum GeometryKind {
   MultiPoint
   MultiLineString
   MultiPolygon
+  GeometryCollection
 } derive(Eq, Debug, ToJson, @json.FromJson)
 
 ///|
@@ -72,6 +73,7 @@ pub fn GeometryKind::code(self : GeometryKind) -> Int32 {
     MultiPoint => 4
     MultiLineString => 5
     MultiPolygon => 6
+    GeometryCollection => 7
   }
 }
 
@@ -85,6 +87,7 @@ pub fn GeometryKind::name(self : GeometryKind) -> String {
     MultiPoint => "MultiPoint"
     MultiLineString => "MultiLineString"
     MultiPolygon => "MultiPolygon"
+    GeometryCollection => "GeometryCollection"
   }
 }
 
@@ -98,6 +101,7 @@ fn kind_from_code(code : Int32) -> GeometryKind raise FgbError {
     4 => MultiPoint
     5 => MultiLineString
     6 => MultiPolygon
+    7 => GeometryCollection
     _ => raise Unsupported("geometry type \{code}")
   }
 }

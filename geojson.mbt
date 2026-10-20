@@ -68,12 +68,31 @@ fn parts_json(geometry : Geometry) -> Json {
 ///|
 pub fn Geometry::to_geojson(self : Geometry) -> Json raise FgbError {
   self.validate()
+  self.geometry_to_geojson_inner()
+}
+
+///|
+fn Geometry::geometry_to_geojson_inner(self : Geometry) -> Json raise FgbError {
+  if self.kind == GeometryCollection {
+    let geometries : Array[Json] = []
+    for part in self.parts {
+      geometries.push(part.geometry_to_geojson_inner())
+    }
+    return Json::object(
+      Map([
+        ("type", Json::string("GeometryCollection")),
+        ("geometries", Json::array(geometries)),
+      ]),
+    )
+  }
   let coordinates = match self.kind {
     Point => coordinate_json(self.xy[0])
     LineString | MultiPoint => coordinates_json(self.xy, 0, self.xy.length())
     Polygon | MultiLineString => parts_json(self)
     MultiPolygon => Json::array(self.parts.map(part => parts_json(part)))
     Unknown => raise InvalidArgument("cannot export Unknown geometry")
+    GeometryCollection =>
+      raise InvalidArgument("collection has no coordinates member")
   }
   Json::object(
     Map([("type", Json::string(self.kind.name())), ("coordinates", coordinates)]),
@@ -132,12 +151,34 @@ pub fn geometry_from_geojson(
   limits~ : Limits = Limits::default(),
 ) -> Geometry raise FgbError {
   limits.validate()
+  let geometry = parse_geometry_geojson(value, limits, 1, Ref(0), Ref(0))
+  geometry.validate(limits~)
+  geometry
+}
+
+///|
+fn parse_geometry_geojson(
+  value : Json,
+  limits : Limits,
+  depth : Int32,
+  budget : Ref[Int32],
+  nodes : Ref[Int32],
+) -> Geometry raise FgbError {
+  enforce(depth, limits.max_depth, "GeoJSON geometry depth")
+  nodes.val = checked_add(nodes.val, 1)
+  enforce(nodes.val, limits.max_geometry_nodes, "GeoJSON geometry nodes")
   let kind = json_text(json_field(value, "type"))
-  let coordinates = json_field(value, "coordinates")
-  let budget = Ref(0)
+  let coordinates = if kind == "GeometryCollection" {
+    Json::null()
+  } else {
+    json_field(value, "coordinates")
+  }
   let geometry : Geometry = match kind {
-    "Point" =>
+    "Point" => {
+      budget.val = checked_add(budget.val, 1)
+      enforce(budget.val, limits.max_coordinates, "GeoJSON coordinates")
       { kind: Point, xy: [parse_coordinate(coordinates)], ends: [], parts: [], }
+    }
     "LineString" =>
       {
         kind: LineString,
@@ -160,13 +201,30 @@ pub fn geometry_from_geojson(
       enforce(values.length(), limits.max_coordinates, "GeoJSON polygon count")
       let parts : Array[Geometry] = []
       for polygon in values {
+        enforce(depth + 1, limits.max_depth, "GeoJSON geometry depth")
+        nodes.val = checked_add(nodes.val, 1)
+        enforce(nodes.val, limits.max_geometry_nodes, "GeoJSON geometry nodes")
         parts.push(parse_parts(polygon, Polygon, limits, budget))
       }
       { kind: MultiPolygon, xy: [], ends: [], parts, }
     }
+    "GeometryCollection" => {
+      let values = json_array(json_field(value, "geometries"))
+      enforce(
+        values.length(),
+        limits.max_geometry_nodes,
+        "GeoJSON collection members",
+      )
+      let parts : Array[Geometry] = []
+      for child in values {
+        parts.push(
+          parse_geometry_geojson(child, limits, depth + 1, budget, nodes),
+        )
+      }
+      { kind: GeometryCollection, xy: [], ends: [], parts, }
+    }
     _ => raise Unsupported("GeoJSON geometry \{kind}")
   }
-  geometry.validate(limits~)
   geometry
 }
 
