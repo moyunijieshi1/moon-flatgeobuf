@@ -219,6 +219,25 @@ pub fn validate_header(
   header : Header,
   limits~ : Limits = Limits::default(),
 ) -> Unit raise FgbError {
+  limits.validate()
+  for text in [header.name, header.title, header.description, header.metadata] {
+    enforce(
+      @utf8.encode(text).length(),
+      limits.max_string_bytes,
+      "header string",
+    )
+  }
+  match header.crs {
+    None => ()
+    Some(crs) =>
+      for text in [crs.org, crs.name, crs.description, crs.wkt, crs.code_string] {
+        enforce(
+          @utf8.encode(text).length(),
+          limits.max_string_bytes,
+          "CRS string",
+        )
+      }
+  }
   if header.features_count < 0 ||
     header.index_node_size < 0 ||
     header.index_node_size > 65535 ||
@@ -236,11 +255,13 @@ pub fn validate_header(
       raise Unsupported("column type \{column.type_code}")
     }
     seen[column.name] = true
-    enforce(
-      @utf8.encode(column.name).length(),
-      limits.max_string_bytes,
-      "column name",
-    )
+    for text in [column.name, column.title, column.description, column.metadata] {
+      enforce(
+        @utf8.encode(text).length(),
+        limits.max_string_bytes,
+        "column string",
+      )
+    }
   }
   match header.envelope {
     Some(bounds) => bounds.validate()

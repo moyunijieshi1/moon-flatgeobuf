@@ -96,7 +96,7 @@ pub fn RangeCache::put(
   bytes : Bytes,
   etag : String,
 ) -> Unit raise FgbError {
-  range.end_inclusive() |> ignore
+  let end = range.end_inclusive()
   if range.length != bytes.length() {
     raise InvalidArgument("cache range length differs from bytes")
   }
@@ -107,21 +107,41 @@ pub fn RangeCache::put(
     self.clear()
     self.validator = etag
   }
-  if bytes.length() > self.capacity {
-    return
-  }
-  // Do not retain duplicate subranges or arrays owned by callers.
+  // Validate every overlap, including partial intersections and a new range
+  // that encloses an older entry. A stable ETag cannot identify different bytes.
+  let mut contained = false
   for entry in self.entries_ {
-    let relative = range.start - entry.start
-    if relative >= 0 &&
-      relative <= entry.bytes.length() &&
-      range.length <= entry.bytes.length() - relative {
-      let previous = slice_bytes(entry.bytes, relative, range.length)
-      if previous != bytes {
+    let entry_end = entry.start + (entry.bytes.length() - 1)
+    let first = if range.start > entry.start {
+      range.start
+    } else {
+      entry.start
+    }
+    let last = if end < entry_end { end } else { entry_end }
+    for at = first; at <= last; at = at + 1 {
+      if entry.bytes[at - entry.start] != bytes[at - range.start] {
         self.clear()
         raise InvalidArgument("same ETag returned inconsistent range bytes")
       }
-      return
+      // Inclusive offsets may legitimately end at Int32::MAX.
+      if at == last {
+        break
+      }
+    }
+    if entry.start <= range.start && entry_end >= end {
+      contained = true
+    }
+  }
+  if contained || bytes.length() > self.capacity {
+    return
+  }
+  // Replace covered entries without double-counting their retained bytes.
+  for i = self.entries_.length() - 1; i >= 0; i = i - 1 {
+    let entry = self.entries_[i]
+    let entry_end = entry.start + (entry.bytes.length() - 1)
+    if range.start <= entry.start && end >= entry_end {
+      self.entries_.remove(i) |> ignore
+      self.retained -= entry.bytes.length()
     }
   }
   while self.entries_.length() >= self.max_entries ||
@@ -169,14 +189,20 @@ pub fn coalesce_ranges(
       continue
     }
     let last = result[result.length() - 1]
-    let last_end = checked_add(last.start, last.length)
-    let end = checked_add(range.start, range.length)
+    let last_end = last.end_inclusive()
+    let end = range.end_inclusive()
     let union_end = if end > last_end { end } else { last_end }
-    let gap = if range.start > last_end { range.start - last_end } else { 0 }
-    if gap <= max_gap && union_end - last.start <= max_length {
+    let gap = if range.start > last_end {
+      range.start - last_end - 1
+    } else {
+      0
+    }
+    // Comparing the inclusive width first also handles a union that would
+    // require Int32::MAX + 1 bytes without overflowing during the check.
+    if gap <= max_gap && union_end - last.start < max_length {
       result[result.length() - 1] = {
         start: last.start,
-        length: union_end - last.start,
+        length: union_end - last.start + 1,
       }
     } else {
       result.push(range)
