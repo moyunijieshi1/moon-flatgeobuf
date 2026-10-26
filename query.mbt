@@ -5,6 +5,10 @@ pub(all) enum Predicate {
   IsNull(String)
   IsNotNull(String)
   NumericRange(String, Double?, Double?)
+  /// Inclusive signed-integer bounds without floating-point conversion.
+  Int64Range(String, Int64?, Int64?)
+  /// Inclusive unsigned-integer bounds without floating-point conversion.
+  UInt64Range(String, UInt64?, UInt64?)
   TextContains(String, String)
   All(Array[Predicate])
   Any(Array[Predicate])
@@ -28,6 +32,8 @@ priv enum BoundPredicate {
   BoundIsNull(Int32)
   BoundIsNotNull(Int32)
   BoundNumericRange(Int32, Double?, Double?)
+  BoundInt64Range(Int32, Int64?, Int64?)
+  BoundUInt64Range(Int32, UInt64?, UInt64?)
   BoundTextContains(Int32, String)
   BoundAll(Array[BoundPredicate])
   BoundAny(Array[BoundPredicate])
@@ -76,10 +82,40 @@ fn bind_predicate(
       }
       if column.type_code == 7 || column.type_code == 8 {
         raise Unsupported(
-          "NumericRange on 64-bit integers; use exact equality or an application predicate",
+          "NumericRange on 64-bit integers; use Int64Range or UInt64Range",
         )
       }
       BoundNumericRange(index, low, high)
+    }
+    Int64Range(name, low, high) => {
+      let index = column_index(header, name)
+      match header.columns[index].type_code {
+        0 | 3 | 5 | 7 => ()
+        _ =>
+          raise InvalidArgument("Int64Range requires a signed integer column")
+      }
+      match (low, high) {
+        (Some(a), Some(b)) if a > b =>
+          raise InvalidArgument("range minimum exceeds maximum")
+        _ => ()
+      }
+      BoundInt64Range(index, low, high)
+    }
+    UInt64Range(name, low, high) => {
+      let index = column_index(header, name)
+      match header.columns[index].type_code {
+        1 | 4 | 6 | 8 => ()
+        _ =>
+          raise InvalidArgument(
+            "UInt64Range requires an unsigned integer column",
+          )
+      }
+      match (low, high) {
+        (Some(a), Some(b)) if a > b =>
+          raise InvalidArgument("range minimum exceeds maximum")
+        _ => ()
+      }
+      BoundUInt64Range(index, low, high)
     }
     All(items) | Any(items) => {
       enforce(items.length(), limits.max_columns, "predicate count")
@@ -123,6 +159,30 @@ fn matches_predicate(
       let high = match maximum {
         None => true
         Some(n) => number <= n
+      }
+      low && high
+    }
+    BoundInt64Range(index, minimum, maximum) => {
+      guard feature.properties[index] is Integer(value) else { return false }
+      let low = match minimum {
+        None => true
+        Some(n) => value >= n
+      }
+      let high = match maximum {
+        None => true
+        Some(n) => value <= n
+      }
+      low && high
+    }
+    BoundUInt64Range(index, minimum, maximum) => {
+      guard feature.properties[index] is Unsigned(value) else { return false }
+      let low = match minimum {
+        None => true
+        Some(n) => value >= n
+      }
+      let high = match maximum {
+        None => true
+        Some(n) => value <= n
       }
       low && high
     }

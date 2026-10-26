@@ -378,6 +378,8 @@ pub(all) enum Predicate {
   IsNull(String)
   IsNotNull(String)
   NumericRange(String, Double?, Double?)
+  Int64Range(String, Int64?, Int64?)
+  UInt64Range(String, UInt64?, UInt64?)
   TextContains(String, String)
   All(Array[Predicate])
   Any(Array[Predicate])
