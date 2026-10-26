@@ -301,6 +301,11 @@ fn RangeQuery::process(self : RangeQuery, data : Bytes) -> Unit raise FgbError {
       self.advance()
     }
     FeatureSize(hit) => {
+      enforce(
+        checked_add(hit.ordinal, 1),
+        self.limits.max_features,
+        "remote feature count",
+      )
       let size = size32(data, 0)
       enforce(size, self.limits.max_feature_bytes, "remote feature bytes")
       if size < 4 {

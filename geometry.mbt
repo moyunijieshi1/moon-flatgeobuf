@@ -165,6 +165,23 @@ fn read_geometry(
   budget : Ref[Int32],
   nodes : Ref[Int32],
 ) -> Geometry raise FgbError {
+  let result = read_geometry_inner(data, at, kind, limits, depth, budget, nodes)
+  // Validate the completed tree once. Recursive parsing enforces shared
+  // coordinate, node and depth budgets before allocating each child.
+  validate_geometry_inner(result, limits, depth, Ref(0)) |> ignore
+  result
+}
+
+///|
+fn read_geometry_inner(
+  data : Bytes,
+  at : Int32,
+  kind : GeometryKind,
+  limits : Limits,
+  depth : Int32,
+  budget : Ref[Int32],
+  nodes : Ref[Int32],
+) -> Geometry raise FgbError {
   enforce(depth, limits.max_depth, "geometry depth")
   nodes.val = checked_add(nodes.val, 1)
   enforce(nodes.val, limits.max_geometry_nodes, "total geometry nodes")
@@ -209,13 +226,18 @@ fn read_geometry(
     let child = indirect(data, parts_at + i * 4)
     let child_kind = if resolved == MultiPolygon { Polygon } else { Unknown }
     parts.push(
-      read_geometry(data, child, child_kind, limits, depth + 1, budget, nodes),
+      read_geometry_inner(
+        data,
+        child,
+        child_kind,
+        limits,
+        depth + 1,
+        budget,
+        nodes,
+      ),
     )
   }
-  let result : Geometry = { kind: resolved, xy, ends, parts, }
-  // Validation here checks shape rules without trusting the binary representation.
-  validate_geometry_inner(result, limits, depth, Ref(0)) |> ignore
-  result
+  { kind: resolved, xy, ends, parts, }
 }
 
 ///|

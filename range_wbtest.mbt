@@ -121,3 +121,50 @@ test "Content-Range parser rejects wildcards negative and overflowing lengths" {
     total: 100,
   })
 }
+
+///|
+test "remote unknown-count limit fails at size prefix before downloading extra payload" {
+  let dataset = sample_dataset(2)
+  let writer = StreamWriter::new(dataset.header)
+  let all = ByteWriter::new()
+  all.bytes(writer.begin())
+  for feature in dataset.features {
+    all.bytes(writer.append(feature))
+  }
+  writer.finish()
+  let bytes = all.finish()
+  let session = RangeQuery::new(selection_world(), limits={
+    ..Limits::default(),
+    max_features: 1,
+  })
+  let mut steps = 0
+  while session.stats().features_decoded == 0 {
+    steps += 1
+    assert_true(steps <= 4)
+    let request = session.request().unwrap()
+    session.accept({
+      status: 206,
+      etag: "\"fixed\"",
+      content_range: "bytes \{request.start}-\{request.end_inclusive()}/\{bytes.length()}",
+      body: slice_bytes(bytes, request.start, request.length),
+    })
+  }
+  let request = session.request().unwrap()
+  assert_eq(request.length, 4)
+  assert_true(
+    try {
+      session.accept({
+        status: 206,
+        etag: "\"fixed\"",
+        content_range: "bytes \{request.start}-\{request.end_inclusive()}/\{bytes.length()}",
+        body: slice_bytes(bytes, request.start, request.length),
+      })
+      false
+    } catch {
+      LimitExceeded(_) => true
+      _ => false
+    },
+  )
+  assert_true(session.is_failed())
+  assert_eq(session.stats().features_decoded, 1)
+}

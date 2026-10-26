@@ -112,14 +112,14 @@ fn StreamDecoder::process_buffer(
       if header.features_count > 0 && self.ordinal >= header.features_count {
         raise InvalidData(self.feature_offset, "extra streamed feature")
       }
-      self.stage = RecordPayload(size)
-    }
-    RecordPayload(size) => {
       enforce(
-        self.ordinal + 1,
+        checked_add(self.ordinal, 1),
         self.limits.max_features,
         "stream feature count",
       )
+      self.stage = RecordPayload(size)
+    }
+    RecordPayload(size) => {
       let feature = decode_feature(
         data,
         self.header_.unwrap(),
@@ -174,7 +174,7 @@ fn StreamDecoder::push_inner(
         } else {
           chunk.length() - cursor
         }
-        self.buffer.bytes(slice_bytes(chunk, cursor, take))
+        self.buffer.bytes_from(chunk, cursor, take)
         cursor += take
         if self.buffer.position() == self.target() {
           self.process_buffer(records)

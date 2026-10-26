@@ -177,6 +177,19 @@ fn ByteWriter::bytes(self : ByteWriter, bytes : Bytes) -> Unit {
 }
 
 ///|
+fn ByteWriter::bytes_from(
+  self : ByteWriter,
+  bytes : Bytes,
+  start : Int32,
+  length : Int32,
+) -> Unit raise FgbError {
+  require_range(bytes, start, length)
+  for i in 0..<length {
+    self.data.push(bytes[start + i])
+  }
+}
+
+///|
 fn ByteWriter::patch_word(self : ByteWriter, at : Int32, value : Int32) -> Unit {
   for i in 0..<4 {
     self.data[at + i] = ((value >> (i * 8)) & 255).to_byte()

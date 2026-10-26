@@ -81,3 +81,89 @@ test "six supported geometries survive FlatBuffers encoding" {
     assert_eq(decoded, geometry)
   }
 }
+
+///|
+test "single geometry tree validation still rejects malformed nested children" {
+  let invalid : Array[Geometry] = [
+    { kind: Point, xy: [], ends: [], parts: [], },
+    { kind: LineString, xy: [{ x: 0.0, y: 0.0, }], ends: [], parts: [], },
+    {
+      kind: Polygon,
+      xy: [
+        { x: 0.0, y: 0.0, },
+        { x: 1.0, y: 0.0, },
+        { x: 1.0, y: 1.0, },
+        { x: 0.0, y: 1.0, },
+      ],
+      ends: [],
+      parts: [],
+    },
+    {
+      kind: MultiPolygon,
+      xy: [],
+      ends: [],
+      parts: [Geometry::point(0.0, 0.0)],
+    },
+  ]
+  for child in invalid {
+    let geometry = collection([Geometry::point(2.0, 3.0), collection([child])])
+    let builder = FbBuilder::new()
+    let at = write_geometry(builder, geometry)
+    let payload = sized_payload(builder.finish(at), 0, 10000)
+    assert_true(
+      try {
+        read_geometry(
+          payload,
+          size32(payload, 0),
+          Unknown,
+          Limits::default(),
+          1,
+          Ref(0),
+          Ref(0),
+        )
+        |> ignore
+        false
+      } catch {
+        _ => true
+      },
+    )
+  }
+}
+
+///|
+test "deep collection decoding respects the exact shared depth budget" {
+  let mut geometry = Geometry::point(3.0, 4.0)
+  for _ in 0..<15 {
+    geometry = collection([geometry])
+  }
+  let header = Header::new(GeometryCollection, [])
+  let feature : Feature = { geometry: Some(geometry), properties: [], }
+  let limits = {
+    ..Limits::default(),
+    max_depth: 16,
+    max_geometry_nodes: 16,
+    max_coordinates: 1,
+  }
+  let bytes = encode_feature(feature, header, limits~)
+  assert_eq(decode_feature(bytes, header, limits~), feature)
+  assert_true(
+    try {
+      decode_feature(bytes, header, limits={ ..limits, max_depth: 15, })
+      |> ignore
+      false
+    } catch {
+      LimitExceeded(_) => true
+      _ => false
+    },
+  )
+  assert_true(
+    try {
+      decode_feature(bytes, header, limits={ ..limits, max_geometry_nodes: 15, })
+      |> ignore
+      false
+    } catch {
+      LimitExceeded(_) => true
+      _ => false
+    },
+  )
+}

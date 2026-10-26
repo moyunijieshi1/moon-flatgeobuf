@@ -87,3 +87,72 @@ test "summary preserves exact integer minima and audit reports unique violations
   assert_eq(report.diagnostics[0].code, "duplicate_unique_value")
   assert_false(audit_archive(b"not an archive").valid)
 }
+
+///|
+test "stream rejects excess unknown-count records before buffering their payload" {
+  let dataset = sample_dataset(2)
+  let writer = StreamWriter::new(dataset.header)
+  let first = ByteWriter::new()
+  first.bytes(writer.begin())
+  first.bytes(writer.append(dataset.features[0]))
+  let decoder = StreamDecoder::new(limits={
+    ..Limits::default(),
+    max_features: 1,
+  })
+  assert_eq(decoder.push(first.finish()).length(), 1)
+  let second = writer.append(dataset.features[1])
+  assert_true(
+    try {
+      decoder.push(slice_bytes(second, 0, 4)) |> ignore
+      false
+    } catch {
+      LimitExceeded(_) => true
+      _ => false
+    },
+  )
+  assert_true(decoder.is_failed())
+  assert_eq(decoder.buffered_bytes(), 4)
+  assert_true(
+    try {
+      decoder.push(b"") |> ignore
+      false
+    } catch {
+      InvalidArgument(_) => true
+      _ => false
+    },
+  )
+}
+
+///|
+test "stream preserves a large binary property across mixed chunk boundaries" {
+  let blob = Bytes::makei(65536, i => (i % 251).to_byte())
+  let dataset : Dataset = {
+    header: Header::new(Point, [Column::new("blob", 14)]),
+    features: [
+      { geometry: Some(Geometry::point(1.0, 2.0)), properties: [Binary(blob)], },
+    ],
+  }
+  let bytes = write_dataset(dataset, options={
+    index_node_size: 0,
+    hilbert_sort: false,
+  })
+  for chunk_size in [37, 4096, bytes.length()] {
+    let decoder = StreamDecoder::new()
+    let output : Array[FeatureRecord] = []
+    let mut at = 0
+    while at < bytes.length() {
+      let take = if bytes.length() - at < chunk_size {
+        bytes.length() - at
+      } else {
+        chunk_size
+      }
+      for record in decoder.push(slice_bytes(bytes, at, take)) {
+        output.push(record)
+      }
+      at += take
+    }
+    decoder.finish()
+    assert_eq(output.length(), 1)
+    assert_eq(output[0].feature, dataset.features[0])
+  }
+}
