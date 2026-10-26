@@ -1,1 +1,2 @@
 spec/flatgeobuf-3.0.1/* -text
+fixtures/natural-earth/countries.geojson -text

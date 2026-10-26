@@ -1,0 +1,11 @@
+{
+  "name": "Natural Earth 1:110m Admin 0 countries",
+  "source": "https://github.com/nvkelso/natural-earth-vector",
+  "commit": "ca96624a56bd078437bca8184e78163e5039ad19",
+  "file": "geojson/ne_110m_admin_0_countries.geojson",
+  "sha256": "6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f",
+  "features": 177,
+  "license": "Public domain",
+  "terms": "https://www.naturalearthdata.com/about/terms-of-use/",
+  "retrieved": "2026-10-26"
+}

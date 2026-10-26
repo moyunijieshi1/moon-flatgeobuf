@@ -10,6 +10,7 @@ file is included in the runtime library.
 | https://github.com/flatgeobuf/flatgeobuf | Schema definitions, format layout, packed-tree behavior, independent JavaScript oracle | BSD-2-Clause |
 | https://flatgeobuf.org/ | Format documentation and ecosystem compatibility | See upstream repository license |
 | https://github.com/moonbitlang/core | Standard library, toolchain-provided runtime | Apache-2.0 |
+| https://github.com/nvkelso/natural-earth-vector | Pinned real-world GeoJSON test fixture | Public domain; see fixtures/natural-earth/source.json and README.md |
 
 The project uses its own BSD-2-Clause license. The `flatgeobuf` npm dependency
 and its transitive dependencies are used only by development acceptance tests.

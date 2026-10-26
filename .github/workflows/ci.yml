@@ -23,6 +23,12 @@ jobs:
       - run: node scripts/check-baseline.cjs
       - run: node scripts/interop.cjs
       - run: node scripts/http-test.cjs
+      - run: node scripts/remote-cancel-test.cjs
+      - run: node scripts/real-data.cjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: real-data-evidence
+          path: artifacts/real-data/
       - run: node scripts/malformed.cjs
       - run: python3 scripts/count-lines.py
       - run: moon info && git diff --exit-code -- '*.mbti'

@@ -1,0 +1,165 @@
+{
+  "dataset": "Natural Earth 1:110m Admin 0 countries",
+  "source_sha256": "6866c877d39cba9c357620878839b336d569f8c662d3cfab4cb1dbe2d39c977f",
+  "features": 177,
+  "input_geojson_bytes": 838726,
+  "indexed_fgb_bytes": 548784,
+  "sequential_fgb_bytes": 541184,
+  "windows_checked": 36,
+  "independent_query_comparisons": 108,
+  "remote": {
+    "requests": 27,
+    "received_bytes": 61616,
+    "index_nodes": 93,
+    "features_decoded": 9,
+    "candidates": 9,
+    "matched": 9
+  },
+  "remote_saved_percent": 88.77,
+  "windows": [
+    {
+      "name": "central-europe",
+      "matches": 9
+    },
+    {
+      "name": "empty-ocean",
+      "matches": 0
+    },
+    {
+      "name": "whole-world",
+      "matches": 177
+    },
+    {
+      "name": "boundary-point",
+      "matches": 1
+    },
+    {
+      "name": "window-0",
+      "matches": 1
+    },
+    {
+      "name": "window-1",
+      "matches": 1
+    },
+    {
+      "name": "window-2",
+      "matches": 4
+    },
+    {
+      "name": "window-3",
+      "matches": 2
+    },
+    {
+      "name": "window-4",
+      "matches": 1
+    },
+    {
+      "name": "window-5",
+      "matches": 1
+    },
+    {
+      "name": "window-6",
+      "matches": 4
+    },
+    {
+      "name": "window-7",
+      "matches": 1
+    },
+    {
+      "name": "window-8",
+      "matches": 0
+    },
+    {
+      "name": "window-9",
+      "matches": 1
+    },
+    {
+      "name": "window-10",
+      "matches": 1
+    },
+    {
+      "name": "window-11",
+      "matches": 1
+    },
+    {
+      "name": "window-12",
+      "matches": 2
+    },
+    {
+      "name": "window-13",
+      "matches": 1
+    },
+    {
+      "name": "window-14",
+      "matches": 4
+    },
+    {
+      "name": "window-15",
+      "matches": 0
+    },
+    {
+      "name": "window-16",
+      "matches": 1
+    },
+    {
+      "name": "window-17",
+      "matches": 1
+    },
+    {
+      "name": "window-18",
+      "matches": 0
+    },
+    {
+      "name": "window-19",
+      "matches": 5
+    },
+    {
+      "name": "window-20",
+      "matches": 1
+    },
+    {
+      "name": "window-21",
+      "matches": 6
+    },
+    {
+      "name": "window-22",
+      "matches": 1
+    },
+    {
+      "name": "window-23",
+      "matches": 0
+    },
+    {
+      "name": "window-24",
+      "matches": 2
+    },
+    {
+      "name": "window-25",
+      "matches": 0
+    },
+    {
+      "name": "window-26",
+      "matches": 2
+    },
+    {
+      "name": "window-27",
+      "matches": 0
+    },
+    {
+      "name": "window-28",
+      "matches": 0
+    },
+    {
+      "name": "window-29",
+      "matches": 5
+    },
+    {
+      "name": "window-30",
+      "matches": 1
+    },
+    {
+      "name": "window-31",
+      "matches": 4
+    }
+  ]
+}

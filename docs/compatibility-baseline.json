@@ -14,7 +14,7 @@
     "format-changelog.md": "01bc59a8d68ed3720475a077b846eece59ea57b8592d082e589c7f2959a1ebee",
     "LICENSE": "82b5250889974b120ef38428a73982e1d1054ea778e2b54312d8721ead5bfd93"
   },
-  "current_release_scope": "0.2.0 XY linear geometry profile with bounded nested GeometryCollection",
+  "current_release_scope": "0.2.1 XY linear geometry profile with bounded nested GeometryCollection",
   "final_compatibility_milestone": "1.0.0 complete fixed-baseline schema interoperability within explicit resource limits",
   "final_milestone_delivered": false
 }

@@ -7,7 +7,7 @@ incremental streams, and a transport-independent HTTP Range query state machine.
 Use it to exchange `.fgb` files with existing GIS tools, select a local region,
 or load only the matching features from an object-storage archive.
 
-Version 0.2.0 targets a bounded XY linear profile of **format 3.0.1**, including
+Version 0.2.1 targets a bounded XY linear profile of **format 3.0.1**, including
 nested GeometryCollection. It does not claim complete format interoperability.
 [COMPATIBILITY.md](COMPATIBILITY.md) fixes the schema commit, reference version,
 current matrix and final 1.0.0 complete-compatibility acceptance gates.
@@ -71,6 +71,27 @@ unchanged object size, and identity content encoding. It sends `If-Match` after
 the first response. Redirects and servers ignoring Range are rejected.
 The actual socket/filesystem work is in Node.js; binary parsing, traversal,
 response validation, and query state transitions are implemented in MoonBit.
+
+Applications can cancel an obsolete viewport query:
+
+```js
+const {queryRemote} = require('./scripts/remote.cjs');
+const controller = new AbortController();
+const pending = queryRemote(url, bounds, {signal: controller.signal, timeoutMs: 30000});
+// When the user moves to another viewport: controller.abort();
+const {geojson, stats} = await pending;
+```
+
+## Real-data demonstration
+
+After `moon build --target js` and `npm ci --ignore-scripts`, run
+`npm run demo:real-data`. This runs offline using the pinned public-domain
+Natural Earth fixture, checks all 177 features against the official implementation,
+compares 36 windows with a separate full scan and exercises actual HTTP Range I/O.
+It creates a `.fgb`, a regional GeoJSON and a JSON report in `artifacts/real-data`.
+The measured regional transfer is 61,616 / 548,784 bytes (88.77% less body data).
+This is one dataset/window, not a general latency or bandwidth guarantee.
+See [the Chinese review and reproduction guide](docs/FINAL_REVIEW.zh-CN.md).
 
 ## Scope
 

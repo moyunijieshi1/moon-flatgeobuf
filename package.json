@@ -3,7 +3,9 @@
   "private": true,
   "description": "Independent interoperability checks and Node.js I/O host for the MoonBit codec",
   "scripts": {
-    "test:interop": "node scripts/interop.cjs"
+    "test:interop": "node scripts/interop.cjs",
+    "test:host": "node scripts/http-test.cjs && node scripts/remote-cancel-test.cjs",
+    "demo:real-data": "node scripts/real-data.cjs"
   },
   "devDependencies": {
     "flatgeobuf": "4.4.0"
