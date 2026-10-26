@@ -81,6 +81,74 @@ pub fn decode_index_node(
 }
 
 ///|
+priv struct IndexCursor {
+  data : Bytes
+  levels : Array[IndexLevel]
+  node_size : Int32
+  query : Bounds
+  pending : Array[(Int32, Int32)]
+}
+
+///|
+fn IndexCursor::new(
+  data : Bytes,
+  count : Int32,
+  node_size : Int32,
+  query : Bounds,
+  limits : Limits,
+) -> IndexCursor raise FgbError {
+  limits.validate()
+  query.validate()
+  let levels = index_levels(count, node_size, limits~)
+  let size = checked_mul(levels[0].end, 40)
+  if data.length() != size {
+    raise InvalidData(0, "index byte length differs from header")
+  }
+  { data, levels, node_size, query, pending: [(0, levels.length() - 1)], }
+}
+
+///|
+fn IndexCursor::next(self : IndexCursor) -> IndexHit? raise FgbError {
+  while self.pending.pop() is Some((node_number, level_number)) {
+    let level = self.levels[level_number]
+    if node_number < level.start || node_number >= level.end {
+      raise InvalidData(
+        node_number * 40,
+        "index child points outside its level",
+      )
+    }
+    let node = decode_index_node(self.data, node_number)
+    if !node.bounds.intersects(self.query) {
+      continue
+    }
+    if level_number == 0 {
+      return Some({ ordinal: node_number - level.start, offset: node.offset, })
+    } else {
+      let children = self.levels[level_number - 1]
+      let expected = children.start +
+        (node_number - level.start) * self.node_size
+      if node.offset != expected {
+        raise InvalidData(
+          node_number * 40 + 32,
+          "invalid packed index child offset",
+        )
+      }
+      let stop = if self.node_size > children.end - node.offset {
+        children.end
+      } else {
+        node.offset + self.node_size
+      }
+      // Reverse stack insertion retains ascending file order without keeping
+      // every visited node or every matching leaf in memory.
+      for child = stop - 1; child >= node.offset; child = child - 1 {
+        self.pending.push((child, level_number - 1))
+      }
+    }
+  }
+  None
+}
+
+///|
 pub fn query_index(
   data : Bytes,
   count : Int32,
@@ -88,49 +156,10 @@ pub fn query_index(
   query : Bounds,
   limits~ : Limits = Limits::default(),
 ) -> Array[IndexHit] raise FgbError {
-  query.validate()
-  let levels = index_levels(count, node_size, limits~)
-  let size = checked_mul(levels[0].end, 40)
-  if data.length() != size {
-    raise InvalidData(0, "index byte length differs from header")
-  }
-  let pending : Array[(Int32, Int32)] = [(0, levels.length() - 1)]
+  let cursor = IndexCursor::new(data, count, node_size, query, limits)
   let hits : Array[IndexHit] = []
-  let mut cursor = 0
-  while cursor < pending.length() {
-    let (node_number, level_number) = pending[cursor]
-    cursor += 1
-    let level = levels[level_number]
-    if node_number < level.start || node_number >= level.end {
-      raise InvalidData(
-        node_number * 40,
-        "index child points outside its level",
-      )
-    }
-    let node = decode_index_node(data, node_number)
-    if !node.bounds.intersects(query) {
-      continue
-    }
-    if level_number == 0 {
-      hits.push({ ordinal: node_number - level.start, offset: node.offset, })
-    } else {
-      let children = levels[level_number - 1]
-      let expected = children.start + (node_number - level.start) * node_size
-      if node.offset != expected {
-        raise InvalidData(
-          node_number * 40 + 32,
-          "invalid packed index child offset",
-        )
-      }
-      let stop = if node_size > children.end - node.offset {
-        children.end
-      } else {
-        node.offset + node_size
-      }
-      for child in node.offset..<stop {
-        pending.push((child, level_number - 1))
-      }
-    }
+  while cursor.next() is Some(hit) {
+    hits.push(hit)
   }
   hits
 }

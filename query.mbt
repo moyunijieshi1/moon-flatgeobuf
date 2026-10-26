@@ -22,24 +22,42 @@ fn column_index(header : Header, name : String) -> Int32 raise FgbError {
 }
 
 ///|
-fn validate_predicate(
+priv enum BoundPredicate {
+  BoundEqual(Int32, Property)
+  BoundNotEqual(Int32, Property)
+  BoundIsNull(Int32)
+  BoundIsNotNull(Int32)
+  BoundNumericRange(Int32, Double?, Double?)
+  BoundTextContains(Int32, String)
+  BoundAll(Array[BoundPredicate])
+  BoundAny(Array[BoundPredicate])
+  BoundNot(BoundPredicate)
+}
+
+///|
+fn bind_predicate(
   predicate : Predicate,
   header : Header,
   depth : Int32,
   limits : Limits,
-) -> Unit raise FgbError {
+) -> BoundPredicate raise FgbError {
   enforce(depth, limits.max_depth, "predicate depth")
   match predicate {
-    Equal(name, _) | NotEqual(name, _) | IsNull(name) | IsNotNull(name) =>
-      column_index(header, name) |> ignore
-    TextContains(name, _) => {
-      let column = header.columns[column_index(header, name)]
+    Equal(name, value) => BoundEqual(column_index(header, name), value)
+    NotEqual(name, value) => BoundNotEqual(column_index(header, name), value)
+    IsNull(name) => BoundIsNull(column_index(header, name))
+    IsNotNull(name) => BoundIsNotNull(column_index(header, name))
+    TextContains(name, text) => {
+      let index = column_index(header, name)
+      let column = header.columns[index]
       if column.type_code < 11 || column.type_code > 13 {
         raise InvalidArgument("TextContains requires a text column")
       }
+      BoundTextContains(index, text)
     }
     NumericRange(name, low, high) => {
-      let column = header.columns[column_index(header, name)]
+      let index = column_index(header, name)
+      let column = header.columns[index]
       if column.type_code > 10 || column.type_code == 2 {
         raise InvalidArgument("NumericRange requires a numeric column")
       }
@@ -61,37 +79,39 @@ fn validate_predicate(
           "NumericRange on 64-bit integers; use exact equality or an application predicate",
         )
       }
+      BoundNumericRange(index, low, high)
     }
     All(items) | Any(items) => {
       enforce(items.length(), limits.max_columns, "predicate count")
-      for item in items {
-        validate_predicate(item, header, depth + 1, limits)
+      let bound = items.map(item => {
+        bind_predicate(item, header, depth + 1, limits)
+      })
+      match predicate {
+        All(_) => BoundAll(bound)
+        _ => BoundAny(bound)
       }
     }
-    Not(item) => validate_predicate(item, header, depth + 1, limits)
+    Not(item) => BoundNot(bind_predicate(item, header, depth + 1, limits))
   }
 }
 
 ///|
 fn matches_predicate(
   feature : Feature,
-  header : Header,
-  predicate : Predicate,
+  predicate : BoundPredicate,
 ) -> Bool raise FgbError {
   match predicate {
-    Equal(name, expected) =>
-      feature.properties[column_index(header, name)] == expected
-    NotEqual(name, expected) =>
-      feature.properties[column_index(header, name)] != expected
-    IsNull(name) => feature.properties[column_index(header, name)] == Null
-    IsNotNull(name) => feature.properties[column_index(header, name)] != Null
-    TextContains(name, text) =>
-      match feature.properties[column_index(header, name)] {
+    BoundEqual(index, expected) => feature.properties[index] == expected
+    BoundNotEqual(index, expected) => feature.properties[index] != expected
+    BoundIsNull(index) => feature.properties[index] == Null
+    BoundIsNotNull(index) => feature.properties[index] != Null
+    BoundTextContains(index, text) =>
+      match feature.properties[index] {
         Text(value) => value.contains(text)
         _ => false
       }
-    NumericRange(name, minimum, maximum) => {
-      let value = feature.properties[column_index(header, name)]
+    BoundNumericRange(index, minimum, maximum) => {
+      let value = feature.properties[index]
       if value == Null {
         return false
       }
@@ -106,23 +126,23 @@ fn matches_predicate(
       }
       low && high
     }
-    All(items) => {
+    BoundAll(items) => {
       for item in items {
-        if !matches_predicate(feature, header, item) {
+        if !matches_predicate(feature, item) {
           return false
         }
       }
       true
     }
-    Any(items) => {
+    BoundAny(items) => {
       for item in items {
-        if matches_predicate(feature, header, item) {
+        if matches_predicate(feature, item) {
           return true
         }
       }
       false
     }
-    Not(item) => !matches_predicate(feature, header, item)
+    BoundNot(item) => !matches_predicate(feature, item)
   }
 }
 
@@ -141,10 +161,10 @@ pub fn Selection::all() -> Selection {
 }
 
 ///|
-pub fn Dataset::project(
-  self : Dataset,
+fn resolve_projection(
+  header : Header,
   fields : Array[String],
-) -> Dataset raise FgbError {
+) -> (Array[Int32], Array[Column]) raise FgbError {
   let seen : Map[String, Bool] = Map([])
   let indexes : Array[Int32] = []
   let columns : Array[Column] = []
@@ -153,10 +173,19 @@ pub fn Dataset::project(
       raise InvalidArgument("duplicate projected field")
     }
     seen[name] = true
-    let i = column_index(self.header, name)
+    let i = column_index(header, name)
     indexes.push(i)
-    columns.push(self.header.columns[i])
+    columns.push(header.columns[i])
   }
+  (indexes, columns)
+}
+
+///|
+pub fn Dataset::project(
+  self : Dataset,
+  fields : Array[String],
+) -> Dataset raise FgbError {
+  let (indexes, columns) = resolve_projection(self.header, fields)
   let features : Array[Feature] = []
   for feature in self.features {
     if feature.properties.length() != self.header.columns.length() {
@@ -171,6 +200,8 @@ pub fn Dataset::project(
 }
 
 ///|
+/// Select a page in file order without decoding later records once the page
+/// is full. This preserves the caller's cursor and is not a full-file audit.
 pub fn Reader::select(
   self : Reader,
   selection : Selection,
@@ -178,32 +209,60 @@ pub fn Reader::select(
   if selection.offset < 0 || selection.limit < 0 {
     raise InvalidArgument("pagination values must not be negative")
   }
-  match selection.predicate {
-    None => ()
+  let predicate = match selection.predicate {
+    None => None
     Some(predicate) =>
-      validate_predicate(predicate, self.header_, 1, self.limits)
+      Some(bind_predicate(predicate, self.header_, 1, self.limits))
   }
-  let records = match selection.bounds {
-    Some(bounds) => self.query(bounds)
-    None => {
-      self.rewind()
-      let records : Array[FeatureRecord] = []
-      while self.next() is Some(record) {
-        records.push(record)
-      }
-      records
-    }
+  match selection.bounds {
+    Some(bounds) => bounds.validate()
+    None => ()
   }
+  // Resolve fields even for a zero-length page, before touching feature data.
+  let projection = match selection.fields {
+    None => None
+    Some(fields) => Some(resolve_projection(self.header_, fields))
+  }
+  let indexed = match selection.bounds {
+    Some(bounds) if self.has_index() && selection.limit > 0 =>
+      Some(
+        IndexCursor::new(
+          slice_bytes(self.data, self.index_start, self.index_size),
+          self.header_.features_count,
+          self.header_.index_node_size,
+          bounds,
+          self.limits,
+        ),
+      )
+    _ => None
+  }
+  let scan : Reader = { ..self, cursor: self.features_start, ordinal: 0, }
   let features : Array[Feature] = []
   let mut skipped = 0
-  for record in records {
-    if features.length() >= selection.limit {
-      break
+  while features.length() < selection.limit {
+    let record = match indexed {
+      Some(cursor) =>
+        match cursor.next() {
+          None => break
+          Some(hit) => self.record(hit.offset, hit.ordinal)
+        }
+      None =>
+        match scan.next() {
+          None => break
+          Some(record) => record
+        }
     }
-    let accepted = match selection.predicate {
+    match selection.bounds {
+      Some(bounds) =>
+        match record.feature.bounds() {
+          Some(actual) if actual.intersects(bounds) => ()
+          _ => continue
+        }
+      None => ()
+    }
+    let accepted = match predicate {
       None => true
-      Some(predicate) =>
-        matches_predicate(record.feature, self.header_, predicate)
+      Some(predicate) => matches_predicate(record.feature, predicate)
     }
     if !accepted {
       continue
@@ -212,19 +271,28 @@ pub fn Reader::select(
       skipped += 1
       continue
     }
-    features.push(record.feature)
+    features.push(
+      match projection {
+        None => record.feature
+        Some((indexes, _)) =>
+          {
+            geometry: record.feature.geometry,
+            properties: indexes.map(i => record.feature.properties[i]),
+          }
+      },
+    )
   }
-  let dataset : Dataset = {
+  {
     header: {
       ..self.header_,
+      columns: match projection {
+        None => self.header_.columns
+        Some((_, columns)) => columns
+      },
       index_node_size: 0,
       features_count: features.length(),
       envelope: dataset_bounds(features),
     },
     features,
-  }
-  match selection.fields {
-    Some(fields) => dataset.project(fields)
-    None => dataset
   }
 }
