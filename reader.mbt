@@ -197,10 +197,15 @@ pub fn Reader::query(
 }
 
 ///|
+/// Check every feature, index boundary and envelope without changing the
+/// caller's read position. Original bytes and an index copy remain resident;
+/// decoded features are processed one at a time.
 pub fn Reader::validate(self : Reader) -> Unit raise FgbError {
-  let dataset = self.read_all()
-  if self.has_index() {
-    let index = slice_bytes(self.data, self.index_start, self.index_size)
+  // A private cursor keeps validation from disturbing an application's scan.
+  // Retain only the current decoded feature, rather than the entire dataset.
+  let scan : Reader = { ..self, cursor: self.features_start, ordinal: 0, }
+  let index = slice_bytes(self.data, self.index_start, self.index_size)
+  let leaf_start = if self.has_index() {
     validate_index(
       index,
       self.header_.features_count,
@@ -213,36 +218,36 @@ pub fn Reader::validate(self : Reader) -> Unit raise FgbError {
       self.header_.index_node_size,
       limits=self.limits,
     )
-    let mut offset = 0
-    self.rewind()
-    for i in 0..<dataset.features.length() {
-      let node = decode_index_node(index, levels[0].start + i)
-      if node.offset != offset {
+    levels[0].start
+  } else {
+    0
+  }
+  while scan.next() is Some(record) {
+    if self.has_index() {
+      let node = decode_index_node(index, leaf_start + record.ordinal)
+      if node.offset != record.offset {
         raise InvalidData(
-          self.index_start + (levels[0].start + i) * 40,
+          self.index_start + (leaf_start + record.ordinal) * 40,
           "leaf does not point to feature boundary",
         )
       }
-      match dataset.features[i].bounds() {
+      match record.feature.bounds() {
         Some(bounds) if node.bounds.contains(bounds) => ()
         _ =>
           raise InvalidData(
-            offset, "indexed feature missing geometry or outside leaf bounds",
+            record.offset,
+            "indexed feature missing geometry or outside leaf bounds",
           )
       }
-      let record = self.record(offset, i)
-      offset += record.byte_length
     }
-  }
-  match self.header_.envelope {
-    None => ()
-    Some(envelope) =>
-      for feature in dataset.features {
-        match feature.bounds() {
+    match self.header_.envelope {
+      None => ()
+      Some(envelope) =>
+        match record.feature.bounds() {
           Some(bounds) if !envelope.contains(bounds) =>
             raise InvalidData(8, "feature outside header envelope")
           _ => ()
         }
-      }
+    }
   }
 }
