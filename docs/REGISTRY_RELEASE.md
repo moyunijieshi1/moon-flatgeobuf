@@ -1,3 +1,24 @@
+# Mooncakes release 0.2.1
+
+Published on 2026-10-26 from source commit 76b35ec. The official publisher
+verified the extracted archive and returned `Server status: 200 OK`.
+
+CI: https://github.com/moyunijieshi1/moon-flatgeobuf/actions/runs/40302245022
+
+A separate consumer installed `moyunijieshi1/moon-flatgeobuf@0.2.1` from the
+public registry. No local path dependency was used. It checked nested/empty
+collections, binary validation, indexed query, GeoJSON round trip and that
+validation preserves an EOF cursor. Output:
+
+```text
+Published 0.2.1 passed: nested/empty collection, binary validation, indexed query and GeoJSON round trip.
+```
+
+See FINAL_REVIEW.zh-CN.md for the new cancellation and real-data evidence.
+The older release entries below remain historical records.
+
+---
+
 # Mooncakes release 0.2.0
 
 Published successfully on 2026-10-20. The official publisher verified the

@@ -1,3 +1,23 @@
+# 0.2.1 verification (2026-10-26)
+
+Source 76b35ec passed all-backend CI with 35 MoonBit tests per backend:
+https://github.com/moyunijieshi1/moon-flatgeobuf/actions/runs/40302245022
+
+The 42 existing independent checks still pass. The pinned Natural Earth fixture
+adds full read-back in both directions for 177 real-world features, plus 36
+windows compared by three query paths against direct GeoJSON bounds (108
+query comparisons). Its live HTTP query returned nine candidates using 61,616
+response bytes out of a 548,784-byte archive. This result is specific to that
+fixture and window and does not establish general performance or full format
+compatibility. See docs/real-data-results.json and scripts/real-data.cjs.
+
+Live remote cancellation/timeout and response cleanup tests pass, as does the
+3226-case malformed-input audit. Source-level validation now decodes each
+feature once and retains only the current decoded feature while preserving
+the caller's cursor. Original bytes and an index copy still remain resident.
+
+---
+
 # Verification evidence
 
 ## 0.2.0 update on 2026-10-20

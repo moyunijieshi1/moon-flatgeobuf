@@ -22,10 +22,10 @@ Sources:
 - https://github.com/flatgeobuf/flatgeobuf/blob/3df4db1a9551821f66a1d789bb8632c8076926be/src/fbs/header.fbs
 - https://github.com/flatgeobuf/flatgeobuf/blob/3df4db1a9551821f66a1d789bb8632c8076926be/src/fbs/feature.fbs
 
-## Current 0.2.0 delivery
+## Current 0.2.1 delivery
 
-**0.2.0 is a bounded XY linear-geometry profile, not full format compatibility.**
-It adds legal 2D GeometryCollection records, including mixed children, arbitrary
+**0.2.1 is a bounded XY linear-geometry profile, not full format compatibility.**
+It includes legal 2D GeometryCollection records, including mixed children, arbitrary
 supported nesting up to max_depth, and empty collections. The binary codec,
 GeoJSON import/export, inferred/mixed headers, bounds, ordinal access, streaming
 and remote queries all use the same recursive geometry representation. This
@@ -51,10 +51,10 @@ unsupported format. Coordinates, scalar values, optional field semantics,
 metadata, child order and type identity must survive a read/write cycle; exact
 original byte layout and full computational topology are not goals.
 
-The target is **not delivered** in 0.2.0. Pending rows below remain obligations
+The target is **not delivered** in 0.2.1. Pending rows below remain obligations
 for that milestone, not hidden exclusions or current feature claims.
 
-| Schema item | 0.2.0 status | 1.0.0 target |
+| Schema item | 0.2.1 status | 1.0.0 target |
 | --- | --- | --- |
 | Unknown (0) | Mixed header discriminator; not a concrete child | Same discriminator semantics |
 | Point (1) | Nonempty XY read/write | All legal dimensional/empty forms |
@@ -105,4 +105,4 @@ rendering, reprojection, self-intersection repair or an unbounded file size.
    overflow, nesting and aggregate node/coordinate budgets on all backends.
 5. Publish the completed matrix and reproducible commands, with no legal row
    marked pending, before describing the release as fully compatible with the
-   fixed baseline. Current 0.2.0 evidence is limited to its documented profile.
+   fixed baseline. Current 0.2.1 evidence is limited to its documented profile.

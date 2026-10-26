@@ -1,5 +1,10 @@
 # Moon FlatGeobuf 终审说明与复现
 
+
+当前公开发布版本：**0.2.1**。本版源代码提交 `76b35ec`，
+[完整 CI 通过](https://github.com/moyunijieshi1/moon-flatgeobuf/actions/runs/40302245022)，
+四个后端各 35 项测试通过；公共包源独立安装验证见 [发布记录](REGISTRY_RELEASE.md)。
+
 核对日期：2026-10-26。项目：https://github.com/moyunijieshi1/moon-flatgeobuf 。
 包：https://mooncakes.io/docs/moyunijieshi1/moon-flatgeobuf 。
 

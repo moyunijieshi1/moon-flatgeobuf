@@ -1,3 +1,23 @@
+# Current acceptance: 0.2.1 (2026-10-26)
+
+Release source: 76b35ec. Verified workflow:
+https://github.com/moyunijieshi1/moon-flatgeobuf/actions/runs/40302245022
+
+- All four backends passed 35 tests each; all-backend check/build and example passed.
+- 42 existing official interoperability checks and 108 real-data spatial query
+  comparisons passed, including all 177 original geometries and attributes.
+- Live cancellation, deadlines, rejected-body cleanup, HTTP range and 3226
+  malformed-input cases passed. Pinned fixture and schema hash checks passed.
+- CI retained the real-data archive, regional GeoJSON and JSON report as artifacts.
+- Public registry publishing and independent 0.2.1 consumer installation passed.
+- 4191 production MoonBit lines; generated code, tests and data are excluded.
+
+See FINAL_REVIEW.zh-CN.md, real-data-results.json and REGISTRY_RELEASE.md.
+Full format 1.0 compatibility is still pending, as listed in COMPATIBILITY.md.
+The snapshots below are historical evidence only.
+
+---
+
 # Current acceptance: 0.2.0 (2026-10-20)
 
 Release source: 1776ff9. All four backends passed 32 tests each; 42 independent
