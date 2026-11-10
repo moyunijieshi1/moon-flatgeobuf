@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct ByteRange {
   start : Int32
   length : Int32
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn ByteRange::end_inclusive(self : ByteRange) -> Int32 raise FgbError {
@@ -18,11 +19,12 @@ pub fn ByteRange::http_header(self : ByteRange) -> String raise FgbError {
 }
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct ContentRange {
   start : Int32
   end_inclusive : Int32
   total : Int32
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 fn decimal_size(text : String) -> Int32 raise FgbError {
@@ -63,14 +65,16 @@ pub fn parse_content_range(text : String) -> ContentRange raise FgbError {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct RangeResponse {
   status : Int32
   content_range : String
   etag : String
   body : Bytes
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct TransferStats {
   requests : Int32
   received_bytes : Int32
@@ -78,7 +82,7 @@ pub(all) struct TransferStats {
   features_decoded : Int32
   candidates : Int32
   matched : Int32
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 enum QueryStep {

@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct Diagnostic {
   severity : String
   code : String
@@ -6,15 +7,16 @@ pub(all) struct Diagnostic {
   feature : Int32?
   column : String?
   byte_offset : Int32?
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct ValidationReport {
   valid : Bool
   checked_features : Int32
   diagnostics : Array[Diagnostic]
   truncated : Bool
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 fn diagnostic_from_error(error : FgbError, feature : Int32?) -> Diagnostic {

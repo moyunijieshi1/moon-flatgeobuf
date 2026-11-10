@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct DatasetSummary {
   features : Int32
   null_geometries : Int32
@@ -6,9 +7,10 @@ pub(all) struct DatasetSummary {
   envelope : Bounds?
   geometry_types : Array[(String, Int32)]
   columns : Array[ColumnSummary]
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct ColumnSummary {
   name : String
   type_name : String
@@ -17,7 +19,7 @@ pub(all) struct ColumnSummary {
   minimum : String?
   maximum : String?
   total_bytes : Int32
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 fn compare_properties(
@@ -147,6 +149,7 @@ pub fn Dataset::summarize(
 }
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct ArchiveSummary {
   file_bytes : Int32
   header_bytes : Int32
@@ -155,7 +158,7 @@ pub(all) struct ArchiveSummary {
   minimum_record_bytes : Int32
   maximum_record_bytes : Int32
   dataset : DatasetSummary
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn inspect_archive(

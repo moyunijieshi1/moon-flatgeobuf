@@ -77,12 +77,13 @@ pub fn encode_feature(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct FeatureRecord {
   ordinal : Int32
   offset : Int32
   byte_length : Int32
   feature : Feature
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Feature::property(

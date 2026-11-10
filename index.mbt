@@ -1,20 +1,23 @@
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct IndexLevel {
   start : Int32
   end : Int32
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct IndexNode {
   bounds : Bounds
   offset : Int32
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct IndexHit {
   ordinal : Int32
   offset : Int32
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn index_levels(

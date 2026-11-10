@@ -1,12 +1,14 @@
 ///|
+#derive(Debug)
 pub suberror FgbError {
   InvalidData(Int32, String)
   Unsupported(String)
   LimitExceeded(String)
   InvalidArgument(String)
-} derive(Debug)
+}
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct Limits {
   max_header_bytes : Int32
   max_feature_bytes : Int32
@@ -18,7 +20,7 @@ pub(all) struct Limits {
   max_depth : Int32
   max_index_nodes : Int32
   max_file_bytes : Int32
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn Limits::default() -> Limits {

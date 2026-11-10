@@ -174,10 +174,11 @@ pub fn import_geojson(
 }
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct SchemaDifference {
   column : String
   message : String
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn compare_schemas(

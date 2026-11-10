@@ -5,13 +5,14 @@ struct CachedRange {
 }
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct CacheStats {
   hits : Int32
   misses : Int32
   evictions : Int32
   retained_bytes : Int32
   entries : Int32
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 /// A cache belongs to one resource. Switching URL requires clear(), even if ETags match.

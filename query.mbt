@@ -1,4 +1,5 @@
 ///|
+#derive(Eq, Debug)
 pub(all) enum Predicate {
   Equal(String, Property)
   NotEqual(String, Property)
@@ -13,7 +14,7 @@ pub(all) enum Predicate {
   All(Array[Predicate])
   Any(Array[Predicate])
   Not(Predicate)
-} derive(Eq, Debug)
+}
 
 ///|
 fn column_index(header : Header, name : String) -> Int32 raise FgbError {
@@ -207,13 +208,14 @@ fn matches_predicate(
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Selection {
   bounds : Bounds?
   predicate : Predicate?
   fields : Array[String]?
   offset : Int32
   limit : Int32
-} derive(Eq, Debug)
+}
 
 ///|
 pub fn Selection::all() -> Selection {

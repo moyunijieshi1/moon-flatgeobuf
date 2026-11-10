@@ -1,10 +1,11 @@
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct Bounds {
   min_x : Double
   min_y : Double
   max_x : Double
   max_y : Double
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn Bounds::validate(self : Bounds) -> Unit raise FgbError {
@@ -46,12 +47,14 @@ pub fn Bounds::union(self : Bounds, other : Bounds) -> Bounds {
 }
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct Coordinate {
   x : Double
   y : Double
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) enum GeometryKind {
   Unknown
   Point
@@ -61,7 +64,7 @@ pub(all) enum GeometryKind {
   MultiLineString
   MultiPolygon
   GeometryCollection
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn GeometryKind::code(self : GeometryKind) -> Int32 {
@@ -107,12 +110,13 @@ fn kind_from_code(code : Int32) -> GeometryKind raise FgbError {
 }
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct Geometry {
   kind : GeometryKind
   xy : Array[Coordinate]
   ends : Array[Int32]
   parts : Array[Geometry]
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn Geometry::point(x : Double, y : Double) -> Geometry {
@@ -120,6 +124,7 @@ pub fn Geometry::point(x : Double, y : Double) -> Geometry {
 }
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct Column {
   name : String
   type_code : Int32
@@ -132,7 +137,7 @@ pub(all) struct Column {
   unique : Bool
   primary_key : Bool
   metadata : String
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn Column::new(
@@ -178,6 +183,7 @@ pub fn Column::type_name(self : Column) -> String {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) enum Property {
   Null
   Integer(Int64)
@@ -186,9 +192,10 @@ pub(all) enum Property {
   Boolean(Bool)
   Text(String)
   Binary(Bytes)
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct Crs {
   org : String
   code : Int32
@@ -196,7 +203,7 @@ pub(all) struct Crs {
   description : String
   wkt : String
   code_string : String
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn Crs::epsg(code : Int32) -> Crs {
@@ -204,6 +211,7 @@ pub fn Crs::epsg(code : Int32) -> Crs {
 }
 
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct Header {
   name : String
   geometry_kind : GeometryKind
@@ -215,7 +223,7 @@ pub(all) struct Header {
   title : String
   description : String
   metadata : String
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn Header::new(kind : GeometryKind, columns : Array[Column]) -> Header {
@@ -234,13 +242,15 @@ pub fn Header::new(kind : GeometryKind, columns : Array[Column]) -> Header {
 }
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Feature {
   geometry : Geometry?
   properties : Array[Property]
-} derive(Eq, Debug)
+}
 
 ///|
+#derive(Eq, Debug)
 pub(all) struct Dataset {
   header : Header
   features : Array[Feature]
-} derive(Eq, Debug)
+}

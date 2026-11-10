@@ -1,8 +1,9 @@
 ///|
+#derive(Eq, Debug, ToJson, @json.FromJson)
 pub(all) struct WriteOptions {
   index_node_size : Int32
   hilbert_sort : Bool
-} derive(Eq, Debug, ToJson, @json.FromJson)
+}
 
 ///|
 pub fn WriteOptions::default() -> WriteOptions {
