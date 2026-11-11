@@ -3,7 +3,7 @@
 English · [中文说明](docs/README.zh-CN.md)
 
 MoonBit reader and writer for the fixed **FlatGeobuf 3.0.1** binary schema.
-Version 1.0.0 adds a native API for all 15 concrete geometry types in the
+Version 0.3.0 adds a native API for all 15 concrete geometry types in the
 pinned schema, Z/M/T/TM vectors, local column schemas, and null and typed-empty
 geometries. It preserves curved and measured data without a GeoJSON round trip.
 See the [compatibility matrix](COMPATIBILITY.md) for test coverage and limits.
@@ -14,7 +14,7 @@ Use a current MoonBit toolchain (tested with moonc 0.10.20). Install the
 published module in your own project:
 
 ```sh
-moon add moyunijieshi1/moon-flatgeobuf@1.0.0
+moon add moyunijieshi1/moon-flatgeobuf@0.3.0
 ```
 
 In `moon.pkg`:

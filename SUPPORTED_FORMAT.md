@@ -2,7 +2,7 @@
 
 Fixed file-format baseline: **3.0.1**; this is different from the pinned oracle
 library version 4.4.0. See COMPATIBILITY.md for the exact upstream commit,
-machine-checked hashes, 1.0.0 native coverage and independent evidence.
+machine-checked hashes, 0.3.0 native coverage and independent evidence.
 
 ## Files and addressing
 

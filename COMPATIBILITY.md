@@ -7,12 +7,12 @@ tag `ts-4.4.0`. The JavaScript test library version 4.4.0 is not the file
 version. The schema hashes and test oracle versions are recorded in
 [the baseline manifest](docs/compatibility-baseline.json).
 
-Version 1.0.0 delivers the native binary model and the following verified
+Version 0.3.0 delivers the native binary model and the following verified
 coverage. The earlier 0.2.1 XY-only submission lacked these native paths.
 Coverage is stated by field and independent test case, not as a guarantee
 about every file from every producer.
 
-| Schema item | 1.0.0 binary behavior and evidence |
+| Schema item | 0.3.0 binary behavior and evidence |
 | --- | --- |
 | Unknown (0) | Header discriminator. Each heterogeneous record supplies its concrete type; the generated-schema suite includes mixed records. |
 | Point (1), LineString (2), Polygon (3), MultiPoint (4), MultiLineString (5), MultiPolygon (6), GeometryCollection (7) | Native coordinates, ends and recursive parts retained; GDAL and generated-schema cases. |

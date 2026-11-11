@@ -1,4 +1,4 @@
-# 1.0.0 verification (2026-11-11)
+# 0.3.0 verification (2026-11-11)
 
 The native model targets the pinned FlatGeobuf 3.0.1 schema. Reproduction:
 

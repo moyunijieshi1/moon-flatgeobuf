@@ -14,7 +14,7 @@
     "format-changelog.md": "01bc59a8d68ed3720475a077b846eece59ea57b8592d082e589c7f2959a1ebee",
     "LICENSE": "82b5250889974b120ef38428a73982e1d1054ea778e2b54312d8721ead5bfd93"
   },
-  "native_release": "1.0.0",
+  "native_release": "0.3.0",
   "native_geometry_types": [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 15, 16, 17],
   "native_dimension_flags": ["Z", "M", "T", "TM"],
   "gdal_oracle_version": "3.11.5"

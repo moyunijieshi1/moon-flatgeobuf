@@ -1,6 +1,10 @@
 # Changelog
 
-## 1.0.0
+## 0.3.0
+
+Mooncakes rejected major version 1 during publication preflight. The native
+codec work planned under the 1.0 milestone ships as package 0.3.0; this does
+not change the pinned FlatGeobuf file-format version 3.0.1.
 
 - Add a native binary model for all 15 concrete geometry types in the pinned
   FlatGeobuf 3.0.1 schema, Z/M/T/TM, per-feature columns, and null/typed empties.

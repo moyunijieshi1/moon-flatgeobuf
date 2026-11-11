@@ -1,6 +1,6 @@
 name = "moyunijieshi1/moon-flatgeobuf"
 
-version = "1.0.0"
+version = "0.3.0"
 
 readme = "README.md"
 
