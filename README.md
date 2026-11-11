@@ -2,23 +2,22 @@
 
 English · [中文说明](docs/README.zh-CN.md)
 
-Pure MoonBit FlatGeobuf 2D feature reader/writer, packed spatial-index queries,
-incremental streams, and a transport-independent HTTP Range query state machine.
-Use it to exchange `.fgb` files with existing GIS tools, select a local region,
-or load only the matching features from an object-storage archive.
+MoonBit reader and writer for the fixed **FlatGeobuf 3.0.1** binary schema.
+Version 1.0.0 adds a native API for all 15 concrete geometry types in the
+pinned schema, Z/M/T/TM vectors, local column schemas, and null and typed-empty
+geometries. It preserves curved and measured data without a GeoJSON round trip.
+See the [compatibility matrix](COMPATIBILITY.md) for test coverage and limits.
 
-Version 0.2.1 targets a bounded XY linear profile of **format 3.0.1**, including
-nested GeometryCollection. It does not claim complete format interoperability.
-[COMPATIBILITY.md](COMPATIBILITY.md) fixes the schema commit, reference version,
-current matrix and final 1.0.0 complete-compatibility acceptance gates.
+## Install and run
 
-## Install
+Use a current MoonBit toolchain (tested with moonc 0.10.20). Install the
+published module in your own project:
 
 ```sh
-moon add moyunijieshi1/moon-flatgeobuf
+moon add moyunijieshi1/moon-flatgeobuf@1.0.0
 ```
 
-Import the library in `moon.pkg`:
+In `moon.pkg`:
 
 ```moonbit
 import {
@@ -26,119 +25,87 @@ import {
 }
 ```
 
-The pure codec has no third-party runtime dependencies. It uses MoonBit core.
-The Node.js CLI and HTTP adapter are optional hosts; the official JavaScript
-FlatGeobuf package is a development-only independent test oracle.
-
-## Library example
-
-```moonbit
-let header = @fgb.Header::new(@fgb.Point, [@fgb.Column::new("name", 11)])
-let dataset : @fgb.Dataset = {
-  header,
-  features: [{
-    geometry: Some(@fgb.Geometry::point(116.4, 39.9)),
-    properties: [@fgb.Text("Beijing")],
-  }],
-}
-let bytes = @fgb.write_dataset(dataset)
-let reader = @fgb.Reader::open(bytes)
-reader.validate()
-let hits = reader.query({
-  min_x: 116.0, min_y: 39.0, max_x: 117.0, max_y: 40.0,
-})
-```
-
-Run the complete example with `moon run examples/basic --target js`.
-
-## CLI
-
-Node.js 24 is required by the acceptance scripts. Build the MoonBit host first:
+The library uses MoonBit core. GDAL and the upstream JS library are test
+oracles only; they are not runtime dependencies. In a clone, run:
 
 ```sh
-moon build --target js
+moon run examples/native --target js
+moon run examples/basic --target js
+```
+
+The native example writes an indexed CircularString with Z/M/T/TM and a
+local schema, reads it back, and checks a query intersecting the arc's bounds
+outside the control points' X range. Expected:
+`CircularString with Z/M/T/TM and local schema: one preserved feature`.
+
+## APIs and command line
+
+| Task | API |
+| --- | --- |
+| Preserve native format fields when reading/writing | `read_native_dataset`, `write_native_dataset` |
+| Validate, read by ordinal or query XY bounding boxes | `NativeReader` |
+| Decode chunks or emit unindexed records incrementally | `NativeStreamDecoder`, `NativeStreamWriter` |
+| Query a remote archive, preserving native feature values | `NativeRangeQuery` |
+| Import/export 2D GeoJSON, select fields and filter properties | `Reader`, `write_dataset`, `import_geojson`, `Dataset::to_geojson` |
+
+For a record with a local schema, `NativeFeature::effective_columns` uses it
+instead of the header schema. Absent and explicitly empty local schemas remain
+distinct. Native writes retain record order and the supplied header; the 2D
+writer retains its optional Hilbert ordering.
+
+For the optional Node.js CLI, build with `moon build --target js`. Use Node.js
+24. Example commands:
+
+```sh
 node scripts/cli.cjs encode examples/places.geojson places.fgb
-node scripts/cli.cjs inspect places.fgb
-node scripts/cli.cjs validate places.fgb
-node scripts/cli.cjs query places.fgb 115 38 118 41 selected.geojson
+node scripts/cli.cjs validate-native places.fgb
+node scripts/cli.cjs transcode places.fgb rewritten.fgb
+node scripts/cli.cjs query-native places.fgb 115 38 118 41 selected.fgb
 node scripts/cli.cjs decode places.fgb restored.geojson
-node scripts/cli.cjs remote https://your-host/data.fgb 115 38 118 41 remote.geojson
 ```
 
-Outputs are created exclusively: an existing destination causes an error.
-The remote command needs HTTP 206, a correct `Content-Range`, a strong ETag,
-unchanged object size, and identity content encoding. It sends `If-Match` after
-the first response. Redirects and servers ignoring Range are rejected.
-The actual socket/filesystem work is in Node.js; binary parsing, traversal,
-response validation, and query state transitions are implemented in MoonBit.
+Use `remote-native URL minX minY maxX maxY output.fgb` for HTTP Range reads.
+The host performs HTTP I/O; MoonBit plans byte ranges, checks the response,
+and decodes the records. The server must honor Range, provide a stable strong
+ETag, and serve uncompressed bytes. CLI output files must not already exist.
 
-Applications can cancel an obsolete viewport query:
-
-```js
-const {queryRemote} = require('./scripts/remote.cjs');
-const controller = new AbortController();
-const pending = queryRemote(url, bounds, {signal: controller.signal, timeoutMs: 30000});
-// When the user moves to another viewport: controller.abort();
-const {geojson, stats} = await pending;
-```
-
-## Real-data demonstration
-
-After `moon build --target js` and `npm ci --ignore-scripts`, run
-`npm run demo:real-data`. This runs offline using the pinned public-domain
-Natural Earth fixture, checks all 177 features against the official implementation,
-compares 36 windows with a separate full scan and exercises actual HTTP Range I/O.
-It creates a `.fgb`, a regional GeoJSON and a JSON report in `artifacts/real-data`.
-The measured regional transfer is 61,616 / 548,784 bytes (88.77% less body data).
-This is one dataset/window, not a general latency or bandwidth guarantee.
-See [the Chinese review and reproduction guide](docs/FINAL_REVIEW.zh-CN.md).
-
-## Scope
-
-- Seven 2D families: Point, MultiPoint, LineString, MultiLineString, Polygon,
-  MultiPolygon and mixed/nested/empty GeometryCollection; null geometries and
-  empty collections are preserved in unindexed files.
-- All 15 standard attribute types; Int64/UInt64 remain exact in the MoonBit API.
-- Header, column and CRS metadata; fixed dataset-wide schemas.
-- Sequential, ordinal and indexed bounding-box access; field projection,
-  property predicates, pagination and GeoJSON conversion.
-- Packed file index read/write; deterministic Hilbert sorting on write.
-- Incremental stream decoding that discards index bytes; unindexed streaming
-  writer with an unknown count; bounded range cache and request coalescing.
-- Structural audit, uniqueness checks and dataset statistics.
-
-Bounding-box matches are **candidates**, not exact polygon intersections. The
-library does not reproject coordinates or render maps. Z/M/T/TM, geometry
-curve geometries and per-feature schemas are explicitly unsupported.
-Offsets use a bounded Int32 address space. Defaults cap files at 1 GiB and
-features at 16 MiB; see `Limits` and [SUPPORTED_FORMAT.md](SUPPORTED_FORMAT.md).
-
-Indexed queries trust the on-disk index for pruning. Call `Reader::validate`
-before querying an untrusted local archive when completeness matters. A partial
-remote query cannot prove the correctness of unvisited subtrees.
+The GeoJSON adapter is a separate 2D, dataset-schema path; it rejects inputs
+it cannot represent. The binary API is the path for curves, dimensional
+vectors, and local schema. Spatial filtering returns XY envelope candidates,
+not exact intersections or reprojection. Null or empty geometry has no
+finite index box; write such datasets without an index. The default archive
+and feature limits are 1 GiB and 16 MiB; offsets are checked Int32 addresses.
+See [SUPPORTED_FORMAT.md](SUPPORTED_FORMAT.md).
 
 ## Verification
 
 ```sh
+moon version --all
 moon fmt --check
 moon check --target all --deny-warn
 moon build --target all --deny-warn
 moon test --target all --deny-warn
-moon run examples/basic --target js
 npm ci --ignore-scripts
 node scripts/check-baseline.cjs
+node scripts/native-schema-test.cjs
 node scripts/interop.cjs
 node scripts/http-test.cjs
+node scripts/remote-cancel-test.cjs
 node scripts/malformed.cjs
-python3 scripts/count-lines.py
+npm run demo:real-data
 ```
 
-`--target all` includes native and requires a C toolchain; Linux GitHub Actions
-provides one. JS and WasmGC checks also run locally on Windows. See
-[INTEROPERABILITY.md](INTEROPERABILITY.md) for evidence and limitations.
+To reproduce the independent curved geometry checks, install GDAL 3.11.5
+Python bindings (e.g. in a conda-forge environment with Python 3.12), then run
+`python scripts/gdal-interop.py`. CI runs both independent suites and saves
+their reports. A C toolchain is needed for the native MoonBit backend;
+see [TOOLCHAIN.md](TOOLCHAIN.md).
 
-## Source and license
+The Natural Earth demo checks 177 real features and 36 windows against
+independent paths. Transfer counts in its report apply to its specific
+window and file, not to arbitrary datasets.
 
-BSD-2-Clause. This is an independent MoonBit implementation of the published
-FlatGeobuf format, with documented reference behavior. No claim is made to be
-the official FlatGeobuf project. See [THIRD_PARTY.md](THIRD_PARTY.md).
+## License
+
+BSD-2-Clause. Independent implementation based on the published format;
+not an official FlatGeobuf implementation. [Sources and licenses](THIRD_PARTY.md).

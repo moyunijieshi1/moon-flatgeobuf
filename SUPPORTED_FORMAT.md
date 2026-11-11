@@ -2,8 +2,7 @@
 
 Fixed file-format baseline: **3.0.1**; this is different from the pinned oracle
 library version 4.4.0. See COMPATIBILITY.md for the exact upstream commit,
-machine-checked hashes, complete matrix and final compatibility milestone.
-Release 0.2.0 implements a restricted XY profile, not the whole baseline.
+machine-checked hashes, 1.0.0 native coverage and independent evidence.
 
 ## Files and addressing
 
@@ -24,7 +23,18 @@ offsets cannot exceed 2 GiB−1; default maximum file size is 1 GiB. This releas
 does not handle global archives larger than that ceiling. It never silently
 wraps large file offsets. `Limits` exposes lower application-specific budgets.
 
-## Geometry
+## Native geometry and the GeoJSON adapter
+
+`NativeReader`, `NativeStreamDecoder` and `NativeRangeQuery` use the native
+model. It retains the concrete geometry codes 1–12 and 15–17, optional XY/ends/
+parts vectors, Z/M/T/TM, and header flags. Curve and Surface (13 and 14) are
+abstract categories, not concrete payloads. Index queries work in XY; circular
+arc extrema are included in the candidate box. They are not exact topology.
+Null geometry, typed empties and empty Point with NaN XY survive unindexed
+binary round trips. Indexed writes require a finite box for every feature.
+
+The following narrower constraints describe `Reader`, `RangeQuery`, and the
+legacy XY/GeoJSON APIs, not the native codec:
 
 Supported: nonempty 2D Point, MultiPoint, LineString, MultiLineString, Polygon,
 MultiPolygon, plus mixed/nested/empty GeometryCollection. Polygon rings must be closed and have at least four coordinates;
@@ -35,8 +45,8 @@ index; indexed output rejects them. Empty GeometryCollection is retained in
 unindexed files and explicitly rejected by indexed writing because it has no
 finite bounds. Other empty non-null geometries remain unsupported.
 
-Coordinates must be finite. Z/M/T/TM, curves and all other unsupported type
-codes are rejected. CRS fields are preserved; no projection conversion occurs.
+On the XY path coordinates must be finite. Z/M/T/TM and curves are rejected
+by that adapter. CRS fields are preserved; no projection conversion occurs.
 GeoJSON export rejects a declared non-EPSG:4326 CRS unless `allow_projected` is
 explicitly set. A missing CRS is treated as caller-owned coordinate semantics;
 `Header::validate_geojson_crs` offers a stricter opt-in check. GeoJSON import
@@ -62,15 +72,17 @@ cannot bypass limits. Default max_geometry_nodes is 100000 per feature.
 | 7 | Long | Integer, exact signed 64-bit |
 | 8 | ULong | Unsigned, exact unsigned 64-bit |
 | 9 | Float | Real, IEEE binary32 rounded on write |
-| 10 | Double | Real, finite IEEE binary64 |
+| 10 | Double | Real, IEEE binary64; XY adapter requires finite values |
 | 11 | String | Text, strict UTF-8 |
 | 12 | Json | Text holding valid JSON |
 | 13 | DateTime | Text; date syntax is retained, not interpreted |
 | 14 | Binary | Binary bytes |
 
 Absent keys are null. Missing required fields, duplicate keys, unknown column
-indexes, mismatched types and numeric overflow fail explicitly. Schema columns
-are dataset-wide. Per-feature schema tables are unsupported. Header metadata
+indexes, mismatched types and numeric overflow fail explicitly. In the native
+model, a present per-feature schema overrides the dataset schema. Absent and
+explicitly empty local schema tables stay distinct. The XY adapter expects a
+dataset-wide schema. Header metadata
 including width/precision/scale is preserved; those descriptive SQL constraints
 are not enforced as formatting or rounding instructions. Dataset validation
 checks declared uniqueness/primary keys; basic decoding does not enforce global
@@ -94,8 +106,9 @@ arithmetic is made.
 
 Packed R-tree nodes occupy 40 bytes: four doubles and one u64 offset. Internal
 offsets are child node numbers; leaf offsets are relative to the feature section.
-The writer sorts by 16-bit-per-axis Hilbert center keys unless disabled, with
-stable input-order tie breaking. Query ordering is archive traversal order.
+The XY writer sorts by 16-bit-per-axis Hilbert center keys unless disabled,
+with stable input-order tie breaking. The native writer retains the supplied
+order. Query ordering is archive traversal order.
 
 Bounds queries return candidates based on intersecting bounding boxes. They do
 not compute exact polygon intersection. Local `Reader::validate` verifies all

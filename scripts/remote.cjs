@@ -1,6 +1,6 @@
 const api = require('./api.cjs');
 
-async function queryRemote(url, bounds, options = {}) {
+async function query(url, bounds, options, suffix) {
   const timeoutMs = options.timeoutMs ?? 30000;
   if (!Number.isInteger(timeoutMs) || timeoutMs < 1 || timeoutMs > 2147483647) {
     throw new RangeError('timeoutMs must be a positive integer up to 2147483647');
@@ -9,12 +9,12 @@ async function queryRemote(url, bounds, options = {}) {
   const deadline = AbortSignal.timeout(timeoutMs);
   const signal = options.signal ? AbortSignal.any([deadline, options.signal]) : deadline;
   signal.throwIfAborted();
-  const session = api.start_remote(JSON.stringify(bounds));
+  const session = api[`start_${suffix}`](JSON.stringify(bounds));
   const fetch_ = options.fetch || globalThis.fetch;
   let validator;
   for (;;) {
     signal.throwIfAborted();
-    const request = JSON.parse(api.next_remote(session));
+    const request = JSON.parse(api[`next_${suffix}`](session));
     if (!request) break;
     const end = request.start + request.length - 1;
     const headers = {Range:`bytes=${request.start}-${end}`,'Accept-Encoding':'identity'};
@@ -41,9 +41,17 @@ async function queryRemote(url, bounds, options = {}) {
     }
     const data=Buffer.concat(parts,length);
     const etag=response.headers.get('etag') || '';
-    api.accept_remote(session,response.status,response.headers.get('content-range') || '',etag,data);
+    api[`accept_${suffix}`](session,response.status,response.headers.get('content-range') || '',etag,data);
     validator=etag;
   }
-  return {geojson:api.result_remote(session),stats:JSON.parse(api.stats_remote(session))};
+  return {result:api[`result_${suffix}`](session),stats:JSON.parse(api[`stats_${suffix}`](session))};
 }
-module.exports={queryRemote};
+async function queryRemote(url, bounds, options = {}) {
+  const {result,stats}=await query(url,bounds,options,'remote');
+  return {geojson:result,stats};
+}
+async function queryNativeRemote(url, bounds, options = {}) {
+  const {result,stats}=await query(url,bounds,options,'native_remote');
+  return {bytes:result,stats};
+}
+module.exports={queryRemote,queryNativeRemote};

@@ -11,7 +11,7 @@ function unwrap(result) {
 module.exports = new Proxy({}, {
   get(_, key) {
     if (typeof raw[key] !== 'function') return undefined;
-    if (key === 'stats_remote' || key === 'report') return (...args) => raw[key](...args);
+    if (key === 'stats_remote' || key === 'stats_native_remote' || key === 'report') return (...args) => raw[key](...args);
     return (...args) => unwrap(raw[key](...args));
   }
 });

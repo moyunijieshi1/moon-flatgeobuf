@@ -1,20 +1,15 @@
 # Toolchain baseline
 
-Validated baseline on 2026-10-18:
+Windows development verification on 2026-11-11 used:
 
-- moon 0.1.20261012 (748b63c, 2026-10-12)
-- moonc v0.10.15+943464bfa
-- Matching official core-latest downloaded on the same date
-- Node.js v24.19.0 for local acceptance scripts
-- Official FlatGeobuf JavaScript package 4.4.0, lockfile included
+- moon 0.1.20261104 (940aa18)
+- moonc v0.10.20+65efd5b93
+- Matching official standard library
+- Node.js 24, and GDAL 3.11.5 Python bindings in a separate conda-forge environment
+- Official FlatGeobuf JavaScript package 4.4.0, locked in package-lock.json
 
-The implementation uses Int32 names, explicit derived trait exports and the
-current labelled-argument syntax after the October formatter migration. The
-compiler-specific JavaScript Result lowering is isolated in scripts/api.cjs.
-It must be retested when upgrading the compiler. Core APIs are cross-backend;
-the optional `host` artifact exports CommonJS functions for Node.js.
-
-CI installs the current official stable toolchain and checks all four backends
-on Linux. Local Windows checks cover JS and WasmGC; native Linux checks are
-performed in CI with its C compiler. A Windows native build needs a compatible
-C compiler and is not part of the local acceptance claim.
+The new source uses the current `#derive` syntax. Use the tested compiler or a
+compatible newer toolchain. CI prints the actual compiler version, enforces
+the contest minimum of 0.10.16, and checks JS, Wasm, WasmGC and native on Linux.
+Native builds require a C compiler. A successful Windows JS build does not
+verify a Windows native build.

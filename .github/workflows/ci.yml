@@ -13,15 +13,25 @@ jobs:
         run: |
           curl -fsSL https://cli.moonbitlang.com/install/unix.sh | bash
           echo "$HOME/.moon/bin" >> "$GITHUB_PATH"
-      - run: moon version
+      - name: Verify compiler version
+        run: |
+          moon version --all
+          python3 - <<'PY'
+          import re, subprocess
+          version = subprocess.check_output(['moon', 'version', '--all'], text=True)
+          match = re.search(r'moonc v(\d+)\.(\d+)\.(\d+)', version)
+          assert match and tuple(map(int, match.groups())) >= (0, 10, 16), version
+          PY
       - run: moon fmt --check
       - run: moon check --target all --deny-warn
       - run: moon build --target all --deny-warn
       - run: moon test --target all --deny-warn
       - run: moon run examples/basic --target js
+      - run: moon run examples/native --target js
       - run: npm ci --ignore-scripts
       - run: node scripts/check-baseline.cjs
       - run: node scripts/interop.cjs
+      - run: node scripts/native-schema-test.cjs
       - run: node scripts/http-test.cjs
       - run: node scripts/remote-cancel-test.cjs
       - run: node scripts/real-data.cjs
@@ -32,3 +42,18 @@ jobs:
       - run: node scripts/malformed.cjs
       - run: python3 scripts/count-lines.py
       - run: moon info && git diff --exit-code -- '*.mbti'
+      - uses: mamba-org/setup-micromamba@v2
+        with:
+          environment-name: native-oracle
+          create-args: >-
+            python=3.12
+            gdal=3.11.5
+          cache-environment: true
+      - run: python scripts/gdal-interop.py
+        shell: micromamba-shell {0}
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-interop-evidence
+          path: |
+            artifacts/native-schema/
+            artifacts/gdal-interop/report.json

@@ -1,5 +1,7 @@
 # Moon FlatGeobuf 终审说明与复现
 
+> 历史材料：0.2.1。请使用 [1.0.0 当前说明](README.zh-CN.md) 与
+> [兼容矩阵](../COMPATIBILITY.md) 核验新版，不要将本文件用于重新申报。
 
 当前公开发布版本：**0.2.1**。本版源代码提交 `76b35ec`，
 [完整 CI 通过](https://github.com/moyunijieshi1/moon-flatgeobuf/actions/runs/40302245022)，

@@ -15,6 +15,7 @@ fn read_property(
   at : Int32,
   code : Int32,
   limits : Limits,
+  ieee~ : Bool = false,
 ) -> (Property, Int32) raise FgbError {
   let width = property_width(code)
   if width > 0 {
@@ -39,8 +40,22 @@ fn read_property(
     6 => Unsigned(u32(data, at).to_uint64())
     7 => Integer(u64(data, at).reinterpret_as_int64())
     8 => Unsigned(u64(data, at))
-    9 => Real(f32(data, at))
-    10 => Real(f64(data, at))
+    9 =>
+      Real(
+        if ieee {
+          Float::reinterpret_from_uint(u32(data, at)).to_double()
+        } else {
+          f32(data, at)
+        },
+      )
+    10 =>
+      Real(
+        if ieee {
+          u64(data, at).reinterpret_as_double()
+        } else {
+          f64(data, at)
+        },
+      )
     11 | 12 | 13 | 14 => {
       let size = size32(data, at)
       enforce(size, limits.max_string_bytes, "property bytes")
@@ -71,6 +86,16 @@ pub fn decode_properties(
   columns : Array[Column],
   limits~ : Limits = Limits::default(),
 ) -> Array[Property] raise FgbError {
+  decode_properties_impl(data, columns, limits, false)
+}
+
+///|
+fn decode_properties_impl(
+  data : Bytes,
+  columns : Array[Column],
+  limits : Limits,
+  ieee : Bool,
+) -> Array[Property] raise FgbError {
   limits.validate()
   enforce(columns.length(), limits.max_columns, "column count")
   let values = Array::make(columns.length(), Property::Null)
@@ -90,6 +115,7 @@ pub fn decode_properties(
       cursor,
       columns[key].type_code,
       limits,
+      ieee~,
     )
     values[key] = value
     seen[key] = true
@@ -154,6 +180,7 @@ fn write_property(
   value : Property,
   code : Int32,
   limits : Limits,
+  ieee~ : Bool = false,
 ) -> Unit raise FgbError {
   match code {
     0 => writer.byte(signed_value(value, -128L, 127L).to_int())
@@ -181,13 +208,22 @@ fn write_property(
     }
     8 => writer.long(unsigned_value(value, 18446744073709551615UL))
     9 => {
-      let n = real_value(value)
-      if n > 3.4028234663852886e38 || n < -3.4028234663852886e38 {
+      let n = match value {
+        Real(n) if ieee => n
+        _ => real_value(value)
+      }
+      if finite(n) && (n > 3.4028234663852886e38 || n < -3.4028234663852886e38) {
         raise InvalidArgument("Float property overflow")
       }
       writer.float(n)
     }
-    10 => writer.double(real_value(value))
+    10 =>
+      writer.double(
+        match value {
+          Real(n) if ieee => n
+          _ => real_value(value)
+        },
+      )
     11 | 12 | 13 => {
       guard value is Text(text) else {
         raise InvalidArgument("expected textual property")
@@ -220,6 +256,16 @@ pub fn encode_properties(
   columns : Array[Column],
   limits~ : Limits = Limits::default(),
 ) -> Bytes raise FgbError {
+  encode_properties_impl(values, columns, limits, false)
+}
+
+///|
+fn encode_properties_impl(
+  values : Array[Property],
+  columns : Array[Column],
+  limits : Limits,
+  ieee : Bool,
+) -> Bytes raise FgbError {
   limits.validate()
   enforce(columns.length(), limits.max_columns, "column count")
   if values.length() != columns.length() {
@@ -234,7 +280,7 @@ pub fn encode_properties(
       continue
     }
     writer.short(i)
-    write_property(writer, values[i], columns[i].type_code, limits)
+    write_property(writer, values[i], columns[i].type_code, limits, ieee~)
     enforce(writer.position(), limits.max_feature_bytes, "properties buffer")
   }
   writer.finish()

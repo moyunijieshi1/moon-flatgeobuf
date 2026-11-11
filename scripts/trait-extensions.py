@@ -1,4 +1,4 @@
-"""Make derived trait method exports explicit for MoonBit 0.10.15.
+"""Make derived trait method exports explicit for MoonBit 0.10.20.
 
 The generated declarations contain no implementation and are excluded from LOC.
 """
@@ -11,12 +11,10 @@ for path in sorted(root.glob('*.mbt')):
     if path.name.endswith(('_test.mbt','_wbtest.mbt')) or '.generated.' in path.name:
         continue
     text=path.read_text(encoding='utf-8')
-    for match in re.finditer(r'\}\s*derive\(([^)]*)\)',text):
-        declarations=list(re.finditer(r'(pub(?:\(all\))?\s+)?(?:struct|enum|suberror)\s+(\w+)',text[:match.start()]))
-        declaration=declarations[-1]
-        if not declaration.group(1):
+    for match in re.finditer(r'#derive\(([^)]*)\)\s*(pub(?:\(all\))?\s+)?(?:struct|enum|suberror)\s+(\w+)',text):
+        if not match.group(2):
             continue
-        name=declaration.group(2)
+        name=match.group(3)
         for trait in match.group(1).split(','):
             trait=trait.strip()
             fields={'Eq':('Eq','equal, not_equal'),'Debug':('@debug.Debug','to_repr'),'ToJson':('ToJson','to_json'),'@json.FromJson':('@json.FromJson','from_json')}

@@ -15,7 +15,7 @@ pub fn compare_schemas(Header, Header) -> Array[SchemaDifference]
 
 pub fn dataset_bounds(Array[Feature]) -> Bounds?
 
-pub fn dataset_from_geojson(Json, Header, limits? : Limits) -> Dataset raise FgbError
+pub fn dataset_from_geojson(@json.Json, Header, limits? : Limits) -> Dataset raise FgbError
 
 pub fn decode_feature(Bytes, Header, limits? : Limits) -> Feature raise FgbError
 
@@ -23,25 +23,33 @@ pub fn decode_header(Bytes, limits? : Limits) -> Header raise FgbError
 
 pub fn decode_index_node(Bytes, Int32) -> IndexNode raise FgbError
 
+pub fn decode_native_feature(Bytes, NativeHeader, limits? : Limits) -> NativeFeature raise FgbError
+
+pub fn decode_native_header(Bytes, limits? : Limits) -> NativeHeader raise FgbError
+
 pub fn decode_properties(Bytes, Array[Column], limits? : Limits) -> Array[Property] raise FgbError
 
 pub fn encode_feature(Feature, Header, limits? : Limits) -> Bytes raise FgbError
 
 pub fn encode_header(Header, limits? : Limits) -> Bytes raise FgbError
 
+pub fn encode_native_feature(NativeFeature, NativeHeader, limits? : Limits) -> Bytes raise FgbError
+
+pub fn encode_native_header(NativeHeader, limits? : Limits) -> Bytes raise FgbError
+
 pub fn encode_properties(Array[Property], Array[Column], limits? : Limits) -> Bytes raise FgbError
 
-pub fn feature_from_geojson(Json, Header, limits? : Limits) -> Feature raise FgbError
+pub fn feature_from_geojson(@json.Json, Header, limits? : Limits) -> Feature raise FgbError
 
-pub fn geometry_from_geojson(Json, limits? : Limits) -> Geometry raise FgbError
+pub fn geometry_from_geojson(@json.Json, limits? : Limits) -> Geometry raise FgbError
 
-pub fn import_geojson(Json, name? : String, limits? : Limits) -> Dataset raise FgbError
+pub fn import_geojson(@json.Json, name? : String, limits? : Limits) -> Dataset raise FgbError
 
 pub fn index_byte_length(Int32, Int32, limits? : Limits) -> Int32 raise FgbError
 
 pub fn index_levels(Int32, Int32, limits? : Limits) -> Array[IndexLevel] raise FgbError
 
-pub fn infer_geojson_header(Json, name? : String, limits? : Limits) -> Header raise FgbError
+pub fn infer_geojson_header(@json.Json, name? : String, limits? : Limits) -> Header raise FgbError
 
 pub fn inspect_archive(Bytes, limits? : Limits) -> ArchiveSummary raise FgbError
 
@@ -51,6 +59,8 @@ pub fn query_index(Bytes, Int32, Int32, Bounds, limits? : Limits) -> Array[Index
 
 pub fn read_dataset(Bytes, limits? : Limits) -> Dataset raise FgbError
 
+pub fn read_native_dataset(Bytes, limits? : Limits) -> NativeDataset raise FgbError
+
 pub fn validate_header(Header, limits? : Limits) -> Unit raise FgbError
 
 pub fn validate_index(Bytes, Int32, Int32, Int32, limits? : Limits) -> Unit raise FgbError
@@ -59,16 +69,20 @@ pub fn validate_magic(Bytes) -> Unit raise FgbError
 
 pub fn write_dataset(Dataset, options? : WriteOptions, limits? : Limits) -> Bytes raise FgbError
 
+pub fn write_native_dataset(NativeDataset, limits? : Limits) -> Bytes raise FgbError
+
 // Errors
+#derive(@debug.Debug)
 pub suberror FgbError {
   InvalidData(Int32, String)
   Unsupported(String)
   LimitExceeded(String)
   InvalidArgument(String)
-} derive(@debug.Debug)
+}
 pub fn FgbError::to_repr(Self) -> @debug.Repr
 
 // Types and methods
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct ArchiveSummary {
   file_bytes : Int32
   header_bytes : Int32
@@ -77,58 +91,62 @@ pub(all) struct ArchiveSummary {
   minimum_record_bytes : Int32
   maximum_record_bytes : Int32
   dataset : DatasetSummary
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn ArchiveSummary::equal(Self, Self) -> Bool
-pub fn ArchiveSummary::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ArchiveSummary::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn ArchiveSummary::not_equal(Self, Self) -> Bool
-pub fn ArchiveSummary::to_json(Self) -> Json
+pub fn ArchiveSummary::to_json(Self) -> @json.Json
 pub fn ArchiveSummary::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Bounds {
   min_x : Double
   min_y : Double
   max_x : Double
   max_y : Double
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Bounds::contains(Self, Self) -> Bool
 pub fn Bounds::equal(Self, Self) -> Bool
-pub fn Bounds::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Bounds::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Bounds::intersects(Self, Self) -> Bool
 pub fn Bounds::not_equal(Self, Self) -> Bool
-pub fn Bounds::to_json(Self) -> Json
+pub fn Bounds::to_json(Self) -> @json.Json
 pub fn Bounds::to_repr(Self) -> @debug.Repr
 pub fn Bounds::union(Self, Self) -> Self
 pub fn Bounds::validate(Self) -> Unit raise FgbError
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct ByteRange {
   start : Int32
   length : Int32
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn ByteRange::end_inclusive(Self) -> Int32 raise FgbError
 pub fn ByteRange::equal(Self, Self) -> Bool
-pub fn ByteRange::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ByteRange::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn ByteRange::http_header(Self) -> String raise FgbError
 pub fn ByteRange::not_equal(Self, Self) -> Bool
-pub fn ByteRange::to_json(Self) -> Json
+pub fn ByteRange::to_json(Self) -> @json.Json
 pub fn ByteRange::to_repr(Self) -> @debug.Repr
 
 type ByteWriter
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct CacheStats {
   hits : Int32
   misses : Int32
   evictions : Int32
   retained_bytes : Int32
   entries : Int32
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn CacheStats::equal(Self, Self) -> Bool
-pub fn CacheStats::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CacheStats::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn CacheStats::not_equal(Self, Self) -> Bool
-pub fn CacheStats::to_json(Self) -> Json
+pub fn CacheStats::to_json(Self) -> @json.Json
 pub fn CacheStats::to_repr(Self) -> @debug.Repr
 
 type CachedRange
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Column {
   name : String
   type_code : Int32
@@ -141,15 +159,16 @@ pub(all) struct Column {
   unique : Bool
   primary_key : Bool
   metadata : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Column::equal(Self, Self) -> Bool
-pub fn Column::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Column::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Column::new(String, Int32, nullable? : Bool) -> Self
 pub fn Column::not_equal(Self, Self) -> Bool
-pub fn Column::to_json(Self) -> Json
+pub fn Column::to_json(Self) -> @json.Json
 pub fn Column::to_repr(Self) -> @debug.Repr
 pub fn Column::type_name(Self) -> String
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct ColumnSummary {
   name : String
   type_name : String
@@ -158,34 +177,37 @@ pub(all) struct ColumnSummary {
   minimum : String?
   maximum : String?
   total_bytes : Int32
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn ColumnSummary::equal(Self, Self) -> Bool
-pub fn ColumnSummary::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ColumnSummary::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn ColumnSummary::not_equal(Self, Self) -> Bool
-pub fn ColumnSummary::to_json(Self) -> Json
+pub fn ColumnSummary::to_json(Self) -> @json.Json
 pub fn ColumnSummary::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct ContentRange {
   start : Int32
   end_inclusive : Int32
   total : Int32
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn ContentRange::equal(Self, Self) -> Bool
-pub fn ContentRange::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ContentRange::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn ContentRange::not_equal(Self, Self) -> Bool
-pub fn ContentRange::to_json(Self) -> Json
+pub fn ContentRange::to_json(Self) -> @json.Json
 pub fn ContentRange::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Coordinate {
   x : Double
   y : Double
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Coordinate::equal(Self, Self) -> Bool
-pub fn Coordinate::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Coordinate::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Coordinate::not_equal(Self, Self) -> Bool
-pub fn Coordinate::to_json(Self) -> Json
+pub fn Coordinate::to_json(Self) -> @json.Json
 pub fn Coordinate::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Crs {
   org : String
   code : Int32
@@ -193,26 +215,28 @@ pub(all) struct Crs {
   description : String
   wkt : String
   code_string : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Crs::epsg(Int32) -> Self
 pub fn Crs::equal(Self, Self) -> Bool
-pub fn Crs::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Crs::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Crs::not_equal(Self, Self) -> Bool
-pub fn Crs::to_json(Self) -> Json
+pub fn Crs::to_json(Self) -> @json.Json
 pub fn Crs::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Dataset {
   header : Header
   features : Array[Feature]
-} derive(Eq, @debug.Debug)
+}
 pub fn Dataset::equal(Self, Self) -> Bool
 pub fn Dataset::not_equal(Self, Self) -> Bool
 pub fn Dataset::project(Self, Array[String]) -> Self raise FgbError
 pub fn Dataset::summarize(Self, limits? : Limits) -> DatasetSummary raise FgbError
-pub fn Dataset::to_geojson(Self, allow_projected? : Bool) -> Json raise FgbError
+pub fn Dataset::to_geojson(Self, allow_projected? : Bool) -> @json.Json raise FgbError
 pub fn Dataset::to_repr(Self) -> @debug.Repr
 pub fn Dataset::validate(Self, limits? : Limits, max_diagnostics? : Int32) -> ValidationReport raise FgbError
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct DatasetSummary {
   features : Int32
   null_geometries : Int32
@@ -220,15 +244,16 @@ pub(all) struct DatasetSummary {
   envelope : Bounds?
   geometry_types : Array[(String, Int32)]
   columns : Array[ColumnSummary]
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn DatasetSummary::equal(Self, Self) -> Bool
-pub fn DatasetSummary::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DatasetSummary::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn DatasetSummary::not_equal(Self, Self) -> Bool
-pub fn DatasetSummary::to_json(Self) -> Json
+pub fn DatasetSummary::to_json(Self) -> @json.Json
 pub fn DatasetSummary::to_repr(Self) -> @debug.Repr
 
 type DecodeStage
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Diagnostic {
   severity : String
   code : String
@@ -236,52 +261,56 @@ pub(all) struct Diagnostic {
   feature : Int32?
   column : String?
   byte_offset : Int32?
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Diagnostic::equal(Self, Self) -> Bool
-pub fn Diagnostic::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Diagnostic::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Diagnostic::not_equal(Self, Self) -> Bool
-pub fn Diagnostic::to_json(Self) -> Json
+pub fn Diagnostic::to_json(Self) -> @json.Json
 pub fn Diagnostic::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Feature {
   geometry : Geometry?
   properties : Array[Property]
-} derive(Eq, @debug.Debug)
+}
 pub fn Feature::bounds(Self) -> Bounds?
 pub fn Feature::equal(Self, Self) -> Bool
 pub fn Feature::not_equal(Self, Self) -> Bool
 pub fn Feature::property(Self, Header, String) -> Property?
-pub fn Feature::to_geojson(Self, Header) -> Json raise FgbError
+pub fn Feature::to_geojson(Self, Header) -> @json.Json raise FgbError
 pub fn Feature::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct FeatureRecord {
   ordinal : Int32
   offset : Int32
   byte_length : Int32
   feature : Feature
-} derive(Eq, @debug.Debug)
+}
 pub fn FeatureRecord::equal(Self, Self) -> Bool
 pub fn FeatureRecord::not_equal(Self, Self) -> Bool
 pub fn FeatureRecord::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Geometry {
   kind : GeometryKind
   xy : Array[Coordinate]
   ends : Array[Int32]
   parts : Array[Geometry]
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Geometry::bounds(Self) -> Bounds?
 pub fn Geometry::coordinate_count(Self) -> Int32
 pub fn Geometry::equal(Self, Self) -> Bool
-pub fn Geometry::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Geometry::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Geometry::not_equal(Self, Self) -> Bool
 pub fn Geometry::point(Double, Double) -> Self
-pub fn Geometry::to_geojson(Self) -> Json raise FgbError
-pub fn Geometry::to_json(Self) -> Json
+pub fn Geometry::to_geojson(Self) -> @json.Json raise FgbError
+pub fn Geometry::to_json(Self) -> @json.Json
 pub fn Geometry::to_repr(Self) -> @debug.Repr
 pub fn Geometry::validate(Self, limits? : Limits) -> Unit raise FgbError
 pub fn Geometry::validate_wgs84(Self, limits? : Limits) -> Unit raise FgbError
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) enum GeometryKind {
   Unknown
   Point
@@ -291,15 +320,16 @@ pub(all) enum GeometryKind {
   MultiLineString
   MultiPolygon
   GeometryCollection
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn GeometryKind::code(Self) -> Int32
 pub fn GeometryKind::equal(Self, Self) -> Bool
-pub fn GeometryKind::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn GeometryKind::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn GeometryKind::name(Self) -> String
 pub fn GeometryKind::not_equal(Self, Self) -> Bool
-pub fn GeometryKind::to_json(Self) -> Json
+pub fn GeometryKind::to_json(Self) -> @json.Json
 pub fn GeometryKind::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Header {
   name : String
   geometry_kind : GeometryKind
@@ -311,47 +341,51 @@ pub(all) struct Header {
   title : String
   description : String
   metadata : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Header::column(Self, String) -> Column?
 pub fn Header::equal(Self, Self) -> Bool
-pub fn Header::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Header::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Header::is_wgs84(Self) -> Bool
 pub fn Header::new(GeometryKind, Array[Column]) -> Self
 pub fn Header::not_equal(Self, Self) -> Bool
-pub fn Header::to_json(Self) -> Json
+pub fn Header::to_json(Self) -> @json.Json
 pub fn Header::to_repr(Self) -> @debug.Repr
 pub fn Header::validate_geojson_crs(Self, assume_wgs84? : Bool) -> Unit raise FgbError
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct IndexHit {
   ordinal : Int32
   offset : Int32
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn IndexHit::equal(Self, Self) -> Bool
-pub fn IndexHit::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn IndexHit::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn IndexHit::not_equal(Self, Self) -> Bool
-pub fn IndexHit::to_json(Self) -> Json
+pub fn IndexHit::to_json(Self) -> @json.Json
 pub fn IndexHit::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct IndexLevel {
   start : Int32
   end : Int32
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn IndexLevel::equal(Self, Self) -> Bool
-pub fn IndexLevel::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn IndexLevel::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn IndexLevel::not_equal(Self, Self) -> Bool
-pub fn IndexLevel::to_json(Self) -> Json
+pub fn IndexLevel::to_json(Self) -> @json.Json
 pub fn IndexLevel::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct IndexNode {
   bounds : Bounds
   offset : Int32
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn IndexNode::equal(Self, Self) -> Bool
-pub fn IndexNode::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn IndexNode::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn IndexNode::not_equal(Self, Self) -> Bool
-pub fn IndexNode::to_json(Self) -> Json
+pub fn IndexNode::to_json(Self) -> @json.Json
 pub fn IndexNode::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct Limits {
   max_header_bytes : Int32
   max_feature_bytes : Int32
@@ -363,15 +397,189 @@ pub(all) struct Limits {
   max_depth : Int32
   max_index_nodes : Int32
   max_file_bytes : Int32
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn Limits::default() -> Self
 pub fn Limits::equal(Self, Self) -> Bool
-pub fn Limits::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Limits::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn Limits::not_equal(Self, Self) -> Bool
-pub fn Limits::to_json(Self) -> Json
+pub fn Limits::to_json(Self) -> @json.Json
 pub fn Limits::to_repr(Self) -> @debug.Repr
 pub fn Limits::validate(Self) -> Unit raise FgbError
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct NativeColumn {
+  name : String
+  type_code : Int32
+  title : String?
+  description : String?
+  width : Int32
+  precision : Int32
+  scale : Int32
+  nullable : Bool
+  unique : Bool
+  primary_key : Bool
+  metadata : String?
+}
+pub fn NativeColumn::equal(Self, Self) -> Bool
+pub fn NativeColumn::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NativeColumn::new(String, Int32) -> Self
+pub fn NativeColumn::not_equal(Self, Self) -> Bool
+pub fn NativeColumn::to_json(Self) -> @json.Json
+pub fn NativeColumn::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct NativeCrs {
+  org : String?
+  code : Int32
+  name : String?
+  description : String?
+  wkt : String?
+  code_string : String?
+}
+pub fn NativeCrs::epsg(Int32) -> Self
+pub fn NativeCrs::equal(Self, Self) -> Bool
+pub fn NativeCrs::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NativeCrs::not_equal(Self, Self) -> Bool
+pub fn NativeCrs::to_json(Self) -> @json.Json
+pub fn NativeCrs::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct NativeDataset {
+  header : NativeHeader
+  features : Array[NativeFeature]
+}
+pub fn NativeDataset::equal(Self, Self) -> Bool
+pub fn NativeDataset::not_equal(Self, Self) -> Bool
+pub fn NativeDataset::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct NativeFeature {
+  geometry : NativeGeometry?
+  properties : Array[Property]
+  columns : Array[NativeColumn]?
+}
+pub fn NativeFeature::bounds(Self) -> Bounds?
+pub fn NativeFeature::effective_columns(Self, NativeHeader) -> Array[NativeColumn]
+pub fn NativeFeature::equal(Self, Self) -> Bool
+pub fn NativeFeature::not_equal(Self, Self) -> Bool
+pub fn NativeFeature::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug)
+pub(all) struct NativeFeatureRecord {
+  ordinal : Int32
+  offset : Int32
+  byte_length : Int32
+  feature : NativeFeature
+}
+pub fn NativeFeatureRecord::equal(Self, Self) -> Bool
+pub fn NativeFeatureRecord::not_equal(Self, Self) -> Bool
+pub fn NativeFeatureRecord::to_repr(Self) -> @debug.Repr
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct NativeGeometry {
+  kind : Int32
+  declared_type : Int32
+  xy : Array[Coordinate]?
+  z : Array[Double]?
+  m : Array[Double]?
+  t : Array[Double]?
+  tm : Array[UInt64]?
+  ends : Array[Int32]?
+  parts : Array[NativeGeometry]?
+}
+pub fn NativeGeometry::bounds(Self) -> Bounds?
+pub fn NativeGeometry::equal(Self, Self) -> Bool
+pub fn NativeGeometry::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NativeGeometry::new(Int32) -> Self
+pub fn NativeGeometry::not_equal(Self, Self) -> Bool
+pub fn NativeGeometry::point(Double, Double) -> Self
+pub fn NativeGeometry::to_json(Self) -> @json.Json
+pub fn NativeGeometry::to_repr(Self) -> @debug.Repr
+pub fn NativeGeometry::validate(Self, NativeHeader, limits? : Limits) -> Unit raise FgbError
+
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
+pub(all) struct NativeHeader {
+  name : String?
+  envelope : Array[Double]?
+  geometry_type : Int32
+  has_z : Bool
+  has_m : Bool
+  has_t : Bool
+  has_tm : Bool
+  columns : Array[NativeColumn]?
+  features_count : Int32
+  index_node_size : Int32
+  crs : NativeCrs?
+  title : String?
+  description : String?
+  metadata : String?
+}
+pub fn NativeHeader::equal(Self, Self) -> Bool
+pub fn NativeHeader::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NativeHeader::new(Int32) -> Self
+pub fn NativeHeader::not_equal(Self, Self) -> Bool
+pub fn NativeHeader::to_json(Self) -> @json.Json
+pub fn NativeHeader::to_repr(Self) -> @debug.Repr
+pub fn NativeHeader::validate(Self, limits? : Limits) -> Unit raise FgbError
+
+pub struct NativeRangeQuery {
+  inner : RangeQuery
+}
+pub fn NativeRangeQuery::accept(Self, RangeResponse) -> Unit raise FgbError
+pub fn NativeRangeQuery::expected_etag(Self) -> String
+pub fn NativeRangeQuery::header(Self) -> NativeHeader?
+pub fn NativeRangeQuery::is_complete(Self) -> Bool
+pub fn NativeRangeQuery::is_failed(Self) -> Bool
+pub fn NativeRangeQuery::new(Bounds, limits? : Limits) -> Self raise FgbError
+pub fn NativeRangeQuery::request(Self) -> ByteRange? raise FgbError
+pub fn NativeRangeQuery::result(Self) -> NativeDataset raise FgbError
+pub fn NativeRangeQuery::stats(Self) -> TransferStats
+
+pub struct NativeReader {
+  data : Bytes
+  header_ : NativeHeader
+  limits : Limits
+  index_start : Int32
+  index_size : Int32
+  features_start : Int32
+  mut cursor : Int32
+  mut ordinal : Int32
+}
+pub fn NativeReader::at(Self, Int32) -> NativeFeatureRecord raise FgbError
+pub fn NativeReader::header(Self) -> NativeHeader
+pub fn NativeReader::next(Self) -> NativeFeatureRecord? raise FgbError
+pub fn NativeReader::open(Bytes, limits? : Limits) -> Self raise FgbError
+pub fn NativeReader::query(Self, Bounds) -> Array[NativeFeatureRecord] raise FgbError
+pub fn NativeReader::read_all(Self) -> NativeDataset raise FgbError
+pub fn NativeReader::rewind(Self) -> Unit
+pub fn NativeReader::validate(Self) -> Unit raise FgbError
+
+pub struct NativeStreamDecoder {
+  inner : StreamDecoder
+}
+pub fn NativeStreamDecoder::buffered_bytes(Self) -> Int32
+pub fn NativeStreamDecoder::finish(Self) -> Unit raise FgbError
+pub fn NativeStreamDecoder::header(Self) -> NativeHeader?
+pub fn NativeStreamDecoder::is_failed(Self) -> Bool
+pub fn NativeStreamDecoder::new(limits? : Limits) -> Self raise FgbError
+pub fn NativeStreamDecoder::push(Self, Bytes) -> Array[NativeFeatureRecord] raise FgbError
+
+pub struct NativeStreamWriter {
+  header_ : NativeHeader
+  limits : Limits
+  mut started : Bool
+  mut closed : Bool
+  mut count : Int32
+  mut bytes : Int32
+}
+pub fn NativeStreamWriter::append(Self, NativeFeature) -> Bytes raise FgbError
+pub fn NativeStreamWriter::begin(Self) -> Bytes raise FgbError
+pub fn NativeStreamWriter::bytes_written(Self) -> Int32
+pub fn NativeStreamWriter::features_written(Self) -> Int32
+pub fn NativeStreamWriter::finish(Self) -> Unit raise FgbError
+pub fn NativeStreamWriter::new(NativeHeader, limits? : Limits) -> Self raise FgbError
+
+#derive(Eq, @debug.Debug)
 pub(all) enum Predicate {
   Equal(String, Property)
   NotEqual(String, Property)
@@ -384,11 +592,12 @@ pub(all) enum Predicate {
   All(Array[Predicate])
   Any(Array[Predicate])
   Not(Predicate)
-} derive(Eq, @debug.Debug)
+}
 pub fn Predicate::equal(Self, Self) -> Bool
 pub fn Predicate::not_equal(Self, Self) -> Bool
 pub fn Predicate::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) enum Property {
   Null
   Integer(Int64)
@@ -397,10 +606,10 @@ pub(all) enum Property {
   Boolean(Bool)
   Text(String)
   Binary(Bytes)
-} derive(Eq, @debug.Debug)
+}
 pub fn Property::equal(Self, Self) -> Bool
 pub fn Property::not_equal(Self, Self) -> Bool
-pub fn Property::to_json_value(Self) -> Json
+pub fn Property::to_json_value(Self) -> @json.Json
 pub fn Property::to_repr(Self) -> @debug.Repr
 
 type QueryStep
@@ -437,6 +646,9 @@ pub struct RangeQuery {
   mut hit_cursor : Int32
   features : Array[Feature]
   mut stats_ : TransferStats
+  mut native_mode : Bool
+  mut native_header_ : NativeHeader?
+  native_features : Array[NativeFeature]
 }
 pub fn RangeQuery::accept(Self, RangeResponse) -> Unit raise FgbError
 pub fn RangeQuery::expected_etag(Self) -> String
@@ -448,12 +660,13 @@ pub fn RangeQuery::request(Self) -> ByteRange? raise FgbError
 pub fn RangeQuery::result(Self) -> Dataset raise FgbError
 pub fn RangeQuery::stats(Self) -> TransferStats
 
+#derive(Eq, @debug.Debug)
 pub(all) struct RangeResponse {
   status : Int32
   content_range : String
   etag : String
   body : Bytes
-} derive(Eq, @debug.Debug)
+}
 pub fn RangeResponse::equal(Self, Self) -> Bool
 pub fn RangeResponse::not_equal(Self, Self) -> Bool
 pub fn RangeResponse::to_repr(Self) -> @debug.Repr
@@ -480,23 +693,25 @@ pub fn Reader::rewind(Self) -> Unit
 pub fn Reader::select(Self, Selection) -> Dataset raise FgbError
 pub fn Reader::validate(Self) -> Unit raise FgbError
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct SchemaDifference {
   column : String
   message : String
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn SchemaDifference::equal(Self, Self) -> Bool
-pub fn SchemaDifference::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SchemaDifference::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn SchemaDifference::not_equal(Self, Self) -> Bool
-pub fn SchemaDifference::to_json(Self) -> Json
+pub fn SchemaDifference::to_json(Self) -> @json.Json
 pub fn SchemaDifference::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug)
 pub(all) struct Selection {
   bounds : Bounds?
   predicate : Predicate?
   fields : Array[String]?
   offset : Int32
   limit : Int32
-} derive(Eq, @debug.Debug)
+}
 pub fn Selection::all() -> Self
 pub fn Selection::equal(Self, Self) -> Bool
 pub fn Selection::not_equal(Self, Self) -> Bool
@@ -512,6 +727,9 @@ pub struct StreamDecoder {
   mut feature_offset : Int32
   mut closed : Bool
   mut failed : Bool
+  mut native_mode : Bool
+  mut native_header_ : NativeHeader?
+  native_records : Array[NativeFeatureRecord]
 }
 pub fn StreamDecoder::buffered_bytes(Self) -> Int32
 pub fn StreamDecoder::features_decoded(Self) -> Int32
@@ -536,6 +754,7 @@ pub fn StreamWriter::features_written(Self) -> Int32
 pub fn StreamWriter::finish(Self) -> Unit raise FgbError
 pub fn StreamWriter::new(Header, limits? : Limits) -> Self raise FgbError
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct TransferStats {
   requests : Int32
   received_bytes : Int32
@@ -543,34 +762,36 @@ pub(all) struct TransferStats {
   features_decoded : Int32
   candidates : Int32
   matched : Int32
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn TransferStats::equal(Self, Self) -> Bool
-pub fn TransferStats::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn TransferStats::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn TransferStats::not_equal(Self, Self) -> Bool
-pub fn TransferStats::to_json(Self) -> Json
+pub fn TransferStats::to_json(Self) -> @json.Json
 pub fn TransferStats::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct ValidationReport {
   valid : Bool
   checked_features : Int32
   diagnostics : Array[Diagnostic]
   truncated : Bool
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn ValidationReport::equal(Self, Self) -> Bool
-pub fn ValidationReport::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ValidationReport::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn ValidationReport::not_equal(Self, Self) -> Bool
-pub fn ValidationReport::to_json(Self) -> Json
+pub fn ValidationReport::to_json(Self) -> @json.Json
 pub fn ValidationReport::to_repr(Self) -> @debug.Repr
 
+#derive(Eq, @debug.Debug, @json.FromJson, @json.ToJson)
 pub(all) struct WriteOptions {
   index_node_size : Int32
   hilbert_sort : Bool
-} derive(Eq, ToJson, @debug.Debug, @json.FromJson)
+}
 pub fn WriteOptions::default() -> Self
 pub fn WriteOptions::equal(Self, Self) -> Bool
-pub fn WriteOptions::from_json(Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WriteOptions::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
 pub fn WriteOptions::not_equal(Self, Self) -> Bool
-pub fn WriteOptions::to_json(Self) -> Json
+pub fn WriteOptions::to_json(Self) -> @json.Json
 pub fn WriteOptions::to_repr(Self) -> @debug.Repr
 
 // Type aliases

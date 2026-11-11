@@ -1,5 +1,16 @@
 # Changelog
 
+## 1.0.0
+
+- Add a native binary model for all 15 concrete geometry types in the pinned
+  FlatGeobuf 3.0.1 schema, Z/M/T/TM, per-feature columns, and null/typed empties.
+- Add native archive, stream and HTTP Range paths that retain types and vectors.
+  Keep the previous XY/GeoJSON API separate and do not linearize curves.
+- Preserve optional header and column values, exact 64-bit numbers, record
+  order and per-feature schema overrides across native binary round trips.
+- Add independent generated-schema and GDAL 3.11.5 semantic comparisons.
+  Update the tested MoonBit toolchain to moonc 0.10.20.
+
 ## 0.2.1
 
 - Validate archives in one feature pass, preserving the active reader cursor and

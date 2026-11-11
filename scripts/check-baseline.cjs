@@ -15,5 +15,6 @@ const lock=JSON.parse(fs.readFileSync(path.join(root,'package-lock.json'),'utf8'
 assert.equal(pkg.devDependencies.flatgeobuf,baseline.oracle_npm_version);
 assert.equal(lock.packages['node_modules/flatgeobuf'].version,baseline.oracle_npm_version);
 assert.equal(lock.packages['node_modules/flatgeobuf'].integrity,baseline.oracle_integrity);
-assert.equal(baseline.final_milestone_delivered,false,'Do not declare full compatibility without completing the matrix');
+const moduleText=fs.readFileSync(path.join(root,'moon.mod'),'utf8');
+assert.equal(moduleText.match(/^version = "([^"]+)"/m)?.[1],baseline.native_release);
 console.log(`Compatibility baseline verified: format ${baseline.format_version}, schema commit ${baseline.upstream_commit}, oracle ${baseline.oracle_npm_version}`);

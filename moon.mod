@@ -1,6 +1,6 @@
 name = "moyunijieshi1/moon-flatgeobuf"
 
-version = "0.2.1"
+version = "1.0.0"
 
 readme = "README.md"
 
@@ -10,6 +10,6 @@ license = "BSD-2-Clause"
 
 keywords = [ "flatgeobuf", "gis", "geospatial", "spatial-index" ]
 
-description = "FlatGeobuf 2D feature codec, packed spatial index, and bounded random-access queries"
+description = "FlatGeobuf 3.0.1 binary codec with curves, dimensional vectors, local schemas and spatial queries"
 
 preferred_target = "js"

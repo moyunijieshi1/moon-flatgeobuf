@@ -1,3 +1,24 @@
+# 1.0.0 verification (2026-11-11)
+
+The native model targets the pinned FlatGeobuf 3.0.1 schema. Reproduction:
+
+```sh
+moon build --target js
+npm ci --ignore-scripts
+node scripts/native-schema-test.cjs
+python scripts/gdal-interop.py   # GDAL 3.11.5 bindings required
+```
+
+Observed results: 1,053 generated-schema binary and index comparisons,
+271 streamed comparisons, four live HTTP comparisons, and 297 rejected
+malformed native inputs. GDAL 3.11.5 read back the same ISO WKB and field
+values in 59 cases. These results cover different capabilities: GDAL
+exercises curves, surfaces and Z/M; the generated bindings exercise all
+dimension flags, exact TM and local schema. Neither suite certifies every
+producer or every possible file. See [COMPATIBILITY.md](COMPATIBILITY.md).
+
+---
+
 # 0.2.1 verification (2026-10-26)
 
 Source 76b35ec passed all-backend CI with 35 MoonBit tests per backend:

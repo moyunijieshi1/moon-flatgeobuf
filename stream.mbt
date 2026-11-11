@@ -18,6 +18,9 @@ pub struct StreamDecoder {
   mut feature_offset : Int32
   mut closed : Bool
   mut failed : Bool
+  mut native_mode : Bool
+  mut native_header_ : NativeHeader?
+  native_records : Array[NativeFeatureRecord]
 }
 
 ///|
@@ -35,6 +38,9 @@ pub fn StreamDecoder::new(
     feature_offset: 0,
     closed: false,
     failed: false,
+    native_mode: false,
+    native_header_: None,
+    native_records: [],
   }
 }
 
@@ -88,7 +94,13 @@ fn StreamDecoder::process_buffer(
       self.stage = HeaderPayload(size)
     }
     HeaderPayload(_) => {
-      let header = decode_header(data, limits=self.limits)
+      let header = if self.native_mode {
+        let native = decode_native_header(data, limits=self.limits)
+        self.native_header_ = Some(native)
+        native.plan_header()
+      } else {
+        decode_header(data, limits=self.limits)
+      }
       let index_size = index_byte_length(
         header.features_count,
         header.index_node_size,
@@ -120,17 +132,31 @@ fn StreamDecoder::process_buffer(
       self.stage = RecordPayload(size)
     }
     RecordPayload(size) => {
-      let feature = decode_feature(
-        data,
-        self.header_.unwrap(),
-        limits=self.limits,
-      )
-      records.push({
-        ordinal: self.ordinal,
-        offset: self.feature_offset,
-        byte_length: size + 4,
-        feature,
-      })
+      if self.native_mode {
+        let feature = decode_native_feature(
+          data,
+          self.native_header_.unwrap(),
+          limits=self.limits,
+        )
+        self.native_records.push({
+          ordinal: self.ordinal,
+          offset: self.feature_offset,
+          byte_length: size + 4,
+          feature,
+        })
+      } else {
+        let feature = decode_feature(
+          data,
+          self.header_.unwrap(),
+          limits=self.limits,
+        )
+        records.push({
+          ordinal: self.ordinal,
+          offset: self.feature_offset,
+          byte_length: size + 4,
+          feature,
+        })
+      }
       self.ordinal += 1
       self.feature_offset = checked_add(self.feature_offset, size + 4)
       self.buffer = ByteWriter::new()

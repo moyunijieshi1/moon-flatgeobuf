@@ -172,6 +172,72 @@ pub extend Dataset with Eq::{equal, not_equal}
 pub extend Dataset with @debug.Debug::{to_repr}
 
 ///|
+pub extend NativeGeometry with Eq::{equal, not_equal}
+
+///|
+pub extend NativeGeometry with @debug.Debug::{to_repr}
+
+///|
+pub extend NativeGeometry with ToJson::{to_json}
+
+///|
+pub extend NativeGeometry with @json.FromJson::{from_json}
+
+///|
+pub extend NativeColumn with Eq::{equal, not_equal}
+
+///|
+pub extend NativeColumn with @debug.Debug::{to_repr}
+
+///|
+pub extend NativeColumn with ToJson::{to_json}
+
+///|
+pub extend NativeColumn with @json.FromJson::{from_json}
+
+///|
+pub extend NativeCrs with Eq::{equal, not_equal}
+
+///|
+pub extend NativeCrs with @debug.Debug::{to_repr}
+
+///|
+pub extend NativeCrs with ToJson::{to_json}
+
+///|
+pub extend NativeCrs with @json.FromJson::{from_json}
+
+///|
+pub extend NativeHeader with Eq::{equal, not_equal}
+
+///|
+pub extend NativeHeader with @debug.Debug::{to_repr}
+
+///|
+pub extend NativeHeader with ToJson::{to_json}
+
+///|
+pub extend NativeHeader with @json.FromJson::{from_json}
+
+///|
+pub extend NativeFeature with Eq::{equal, not_equal}
+
+///|
+pub extend NativeFeature with @debug.Debug::{to_repr}
+
+///|
+pub extend NativeDataset with Eq::{equal, not_equal}
+
+///|
+pub extend NativeDataset with @debug.Debug::{to_repr}
+
+///|
+pub extend NativeFeatureRecord with Eq::{equal, not_equal}
+
+///|
+pub extend NativeFeatureRecord with @debug.Debug::{to_repr}
+
+///|
 pub extend Predicate with Eq::{equal, not_equal}
 
 ///|

@@ -112,6 +112,9 @@ pub struct RangeQuery {
   mut hit_cursor : Int32
   features : Array[Feature]
   mut stats_ : TransferStats
+  mut native_mode : Bool
+  mut native_header_ : NativeHeader?
+  native_features : Array[NativeFeature]
 }
 
 ///|
@@ -136,6 +139,9 @@ pub fn RangeQuery::new(
     hits: [],
     hit_cursor: 0,
     features: [],
+    native_mode: false,
+    native_header_: None,
+    native_features: [],
     stats_: {
       requests: 0,
       received_bytes: 0,
@@ -224,7 +230,13 @@ fn RangeQuery::process(self : RangeQuery, data : Bytes) -> Unit raise FgbError {
       self.step = HeaderBlock(size)
     }
     HeaderBlock(_) => {
-      let header = decode_header(data, limits=self.limits)
+      let header = if self.native_mode {
+        let native = decode_native_header(data, limits=self.limits)
+        self.native_header_ = Some(native)
+        native.plan_header()
+      } else {
+        decode_header(data, limits=self.limits)
+      }
       self.header_ = Some(header)
       self.index_start = 8 + data.length()
       let index_bytes = index_byte_length(
@@ -319,7 +331,21 @@ fn RangeQuery::process(self : RangeQuery, data : Bytes) -> Unit raise FgbError {
     }
     FeatureBlock(hit, size) => {
       let header = self.header_.unwrap()
-      let feature = decode_feature(data, header, limits=self.limits)
+      let native = if self.native_mode {
+        Some(
+          decode_native_feature(
+            data,
+            self.native_header_.unwrap(),
+            limits=self.limits,
+          ),
+        )
+      } else {
+        None
+      }
+      let feature = match native {
+        Some(feature) => feature.bounds_proxy()
+        None => decode_feature(data, header, limits=self.limits)
+      }
       self.stats_ = {
         ..self.stats_,
         features_decoded: self.stats_.features_decoded + 1,
@@ -327,6 +353,10 @@ fn RangeQuery::process(self : RangeQuery, data : Bytes) -> Unit raise FgbError {
       match feature.bounds() {
         Some(bounds) if bounds.intersects(self.bounds) => {
           self.features.push(feature)
+          match native {
+            Some(feature) => self.native_features.push(feature)
+            None => ()
+          }
           self.stats_ = { ..self.stats_, matched: self.stats_.matched + 1, }
         }
         _ => ()
