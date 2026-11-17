@@ -69,6 +69,15 @@ The host performs HTTP I/O; MoonBit plans byte ranges, checks the response,
 and decodes the records. The server must honor Range, provide a stable strong
 ETag, and serve uncompressed bytes. CLI output files must not already exist.
 
+The three application workflows in the project proposal are regression-tested,
+not only described:
+
+| Proposal workflow | Executable evidence |
+| --- | --- |
+| Preserve a GIS file containing curves and Z/M | `python scripts/gdal-interop.py` creates GDAL files, runs the MoonBit `transcode` path, and compares ISO WKB plus fields in GDAL. |
+| Process byte chunks with record-local schemas | The MoonBit test `application workflow processes chunked heterogeneous schemas record by record` feeds an indexed archive one byte at a time, selects each effective schema, and writes a new stream. |
+| Read an indexed local file or URL by XY window and emit `.fgb` | The MoonBit test `application workflow queries and emits a reusable native archive` reopens and validates the output; `node scripts/native-schema-test.cjs` also compares real localhost HTTP Range output with the local result. |
+
 The GeoJSON adapter is a separate 2D, dataset-schema path; it rejects inputs
 it cannot represent. The binary API is the path for curves, dimensional
 vectors, and local schema. Spatial filtering returns XY envelope candidates,

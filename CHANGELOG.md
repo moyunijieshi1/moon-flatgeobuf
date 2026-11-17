@@ -1,5 +1,13 @@
 # Changelog
 
+## Unreleased
+
+- Add proposal-level regression tests for multi-feature indexed selection,
+  record-local schemas across one-byte stream chunks, and validated `.fgb`
+  output that can be reopened.
+- Map each promised application workflow to executable evidence and replace the
+  stale 0.2.1 acceptance heading with the bounded 0.3.0 delivery contract.
+
 ## 0.3.0
 
 Mooncakes rejected major version 1 during publication preflight. The native

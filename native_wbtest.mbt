@@ -230,3 +230,134 @@ test "native parser and stream reject truncation and enforce configured limits" 
     },
   )
 }
+
+///|
+fn native_application_case(indexed : Bool) -> NativeDataset {
+  let arc = {
+    ..NativeGeometry::new(8),
+    xy: Some([{ x: 0.0, y: 0.0, }, { x: 1.0, y: 2.0, }, { x: 2.0, y: 0.0, }]),
+    z: Some([10.0, 20.0, 30.0]),
+    m: Some([1.0, 2.0, 3.0]),
+  }
+  let point = {
+    ..NativeGeometry::point(20.0, 20.0),
+    z: Some([40.0]),
+    m: Some([4.0]),
+  }
+  let polygon = {
+    ..NativeGeometry::new(3),
+    xy: Some([
+      { x: -20.0, y: -20.0, },
+      { x: -18.0, y: -20.0, },
+      { x: -18.0, y: -18.0, },
+      { x: -20.0, y: -20.0, },
+    ]),
+    z: Some([0.0, 0.0, 0.0, 0.0]),
+    m: Some([5.0, 6.0, 7.0, 5.0]),
+    ends: Some([4]),
+  }
+  let features : Array[NativeFeature] = [
+    {
+      geometry: Some(arc),
+      columns: Some([
+        NativeColumn::new("name", 11),
+        NativeColumn::new("exact", 7),
+      ]),
+      properties: [Text("curve"), Integer(9007199254740993L)],
+    },
+    {
+      geometry: Some(point),
+      columns: Some([NativeColumn::new("code", 6)]),
+      properties: [Unsigned(4294967295UL)],
+    },
+    {
+      geometry: Some(polygon),
+      columns: None,
+      properties: [Text("global schema")],
+    },
+  ]
+  let header = {
+    ..NativeHeader::new(0),
+    name: Some("application acceptance"),
+    has_z: true,
+    has_m: true,
+    columns: Some([NativeColumn::new("label", 11)]),
+    features_count: if indexed {
+      features.length()
+    } else {
+      0
+    },
+    index_node_size: if indexed {
+      2
+    } else {
+      0
+    },
+    envelope: Some([-21.0, -21.0, -1.0, -1.0, 21.0, 21.0, 100.0, 10.0]),
+  }
+  { header, features, }
+}
+
+///|
+test "application workflow queries and emits a reusable native archive" {
+  let source = native_application_case(true)
+  let reader = NativeReader::open(write_native_dataset(source))
+  reader.validate()
+  let selected = reader.query({
+    min_x: 2.1,
+    min_y: 0.0,
+    max_x: 2.2,
+    max_y: 2.0,
+  })
+  assert_eq(selected.length(), 1)
+  assert_eq(selected[0].ordinal, 0)
+  assert_eq(selected[0].feature, source.features[0])
+  assert_eq(
+    selected[0].feature.effective_columns(source.header).map(c => c.name),
+    ["name", "exact"],
+  )
+  let result : NativeDataset = {
+    header: {
+      ..source.header,
+      features_count: selected.length(),
+      index_node_size: 0,
+    },
+    features: selected.map(record => record.feature),
+  }
+  let reopened = NativeReader::open(write_native_dataset(result))
+  reopened.validate()
+  assert_eq(reopened.read_all(), result)
+}
+
+///|
+test "application workflow processes chunked heterogeneous schemas record by record" {
+  let source = native_application_case(true)
+  let input = write_native_dataset(source)
+  let decoder = NativeStreamDecoder::new()
+  let writer = NativeStreamWriter::new(source.header)
+  let output = ByteWriter::new()
+  output.bytes(writer.begin())
+  let schema_names : Array[Array[String]] = []
+  for i in 0..<input.length() {
+    for record in decoder.push(Bytes::makei(1, _ => input[i])) {
+      schema_names.push(
+        record.feature.effective_columns(source.header).map(c => c.name),
+      )
+      output.bytes(writer.append(record.feature))
+    }
+  }
+  decoder.finish()
+  writer.finish()
+  assert_eq(schema_names, [["name", "exact"], ["code"], ["label"]])
+  assert_eq(writer.features_written(), source.features.length())
+  let reopened = NativeReader::open(output.finish())
+  reopened.validate()
+  assert_eq(reopened.read_all(), {
+    header: {
+      ..source.header,
+      features_count: 0,
+      index_node_size: 0,
+      envelope: None,
+    },
+    features: source.features,
+  })
+}
