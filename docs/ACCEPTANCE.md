@@ -1,4 +1,36 @@
-# Current acceptance: 0.2.1 (2026-10-26)
+# Current acceptance: 0.3.0 (2026-11-17)
+
+This section records executable evidence for the current package. It does not
+claim validation of every file produced by every GIS application.
+
+- `moon check`, `moon build`, and 65 tests pass on JS, Wasm, WasmGC, and native
+  with moonc 0.10.20. Two proposal-level tests cover multiple indexed features,
+  different record-local schemas, one-byte chunks, window selection, output
+  archive creation, reopening, and full validation.
+- `node scripts/native-schema-test.cjs` makes files with the official generated
+  FlatBuffers classes. It performs 1,053 binary comparisons, 271 chunked-stream
+  comparisons and four real localhost HTTP Range comparisons, and rejects 297
+  representative malformed inputs.
+- `python scripts/gdal-interop.py` asks GDAL 3.11.5 to create linear, curved,
+  Z/M, surface and legal empty cases. It transcodes each file through the
+  MoonBit path and has GDAL compare ISO WKB and field values in 59 cases.
+- The current delivered contract is the pinned FlatGeobuf 3.0.1 schema and the
+  explicit limits in `COMPATIBILITY.md` and `SUPPORTED_FORMAT.md`: 15 concrete
+  geometry codes, Z/M/T/TM vectors, dataset or record-local schemas, null and
+  typed-empty geometry in unindexed archives, packed-index queries, streaming,
+  and checked HTTP ranges. Abstract Curve (13) and Surface (14) are accepted as
+  header categories; feature payloads use a concrete member type.
+- The project does not promise exact topology intersection, reprojection,
+  byte-identical rewrites, automatic rendering, files beyond configured Int32
+  addressing limits, or compatibility with future format revisions.
+
+The three proposal workflows map to concrete checks in the README. The public
+package is `moyunijieshi1/moon-flatgeobuf@0.3.0`; GDAL and the JavaScript oracle
+are development-only dependencies, not runtime implementations.
+
+---
+
+# Historical acceptance: 0.2.1 (2026-10-26)
 
 Release source: 76b35ec. Verified workflow:
 https://github.com/moyunijieshi1/moon-flatgeobuf/actions/runs/40302245022
