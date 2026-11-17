@@ -93,7 +93,7 @@ pub(all) struct ArchiveSummary {
   dataset : DatasetSummary
 }
 pub fn ArchiveSummary::equal(Self, Self) -> Bool
-pub fn ArchiveSummary::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ArchiveSummary::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn ArchiveSummary::not_equal(Self, Self) -> Bool
 pub fn ArchiveSummary::to_json(Self) -> @json.Json
 pub fn ArchiveSummary::to_repr(Self) -> @debug.Repr
@@ -107,7 +107,7 @@ pub(all) struct Bounds {
 }
 pub fn Bounds::contains(Self, Self) -> Bool
 pub fn Bounds::equal(Self, Self) -> Bool
-pub fn Bounds::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Bounds::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Bounds::intersects(Self, Self) -> Bool
 pub fn Bounds::not_equal(Self, Self) -> Bool
 pub fn Bounds::to_json(Self) -> @json.Json
@@ -122,7 +122,7 @@ pub(all) struct ByteRange {
 }
 pub fn ByteRange::end_inclusive(Self) -> Int32 raise FgbError
 pub fn ByteRange::equal(Self, Self) -> Bool
-pub fn ByteRange::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ByteRange::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn ByteRange::http_header(Self) -> String raise FgbError
 pub fn ByteRange::not_equal(Self, Self) -> Bool
 pub fn ByteRange::to_json(Self) -> @json.Json
@@ -139,7 +139,7 @@ pub(all) struct CacheStats {
   entries : Int32
 }
 pub fn CacheStats::equal(Self, Self) -> Bool
-pub fn CacheStats::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn CacheStats::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn CacheStats::not_equal(Self, Self) -> Bool
 pub fn CacheStats::to_json(Self) -> @json.Json
 pub fn CacheStats::to_repr(Self) -> @debug.Repr
@@ -161,7 +161,7 @@ pub(all) struct Column {
   metadata : String
 }
 pub fn Column::equal(Self, Self) -> Bool
-pub fn Column::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Column::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Column::new(String, Int32, nullable? : Bool) -> Self
 pub fn Column::not_equal(Self, Self) -> Bool
 pub fn Column::to_json(Self) -> @json.Json
@@ -179,7 +179,7 @@ pub(all) struct ColumnSummary {
   total_bytes : Int32
 }
 pub fn ColumnSummary::equal(Self, Self) -> Bool
-pub fn ColumnSummary::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ColumnSummary::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn ColumnSummary::not_equal(Self, Self) -> Bool
 pub fn ColumnSummary::to_json(Self) -> @json.Json
 pub fn ColumnSummary::to_repr(Self) -> @debug.Repr
@@ -191,7 +191,7 @@ pub(all) struct ContentRange {
   total : Int32
 }
 pub fn ContentRange::equal(Self, Self) -> Bool
-pub fn ContentRange::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ContentRange::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn ContentRange::not_equal(Self, Self) -> Bool
 pub fn ContentRange::to_json(Self) -> @json.Json
 pub fn ContentRange::to_repr(Self) -> @debug.Repr
@@ -202,7 +202,7 @@ pub(all) struct Coordinate {
   y : Double
 }
 pub fn Coordinate::equal(Self, Self) -> Bool
-pub fn Coordinate::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Coordinate::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Coordinate::not_equal(Self, Self) -> Bool
 pub fn Coordinate::to_json(Self) -> @json.Json
 pub fn Coordinate::to_repr(Self) -> @debug.Repr
@@ -218,7 +218,7 @@ pub(all) struct Crs {
 }
 pub fn Crs::epsg(Int32) -> Self
 pub fn Crs::equal(Self, Self) -> Bool
-pub fn Crs::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Crs::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Crs::not_equal(Self, Self) -> Bool
 pub fn Crs::to_json(Self) -> @json.Json
 pub fn Crs::to_repr(Self) -> @debug.Repr
@@ -246,7 +246,7 @@ pub(all) struct DatasetSummary {
   columns : Array[ColumnSummary]
 }
 pub fn DatasetSummary::equal(Self, Self) -> Bool
-pub fn DatasetSummary::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn DatasetSummary::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn DatasetSummary::not_equal(Self, Self) -> Bool
 pub fn DatasetSummary::to_json(Self) -> @json.Json
 pub fn DatasetSummary::to_repr(Self) -> @debug.Repr
@@ -263,7 +263,7 @@ pub(all) struct Diagnostic {
   byte_offset : Int32?
 }
 pub fn Diagnostic::equal(Self, Self) -> Bool
-pub fn Diagnostic::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Diagnostic::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Diagnostic::not_equal(Self, Self) -> Bool
 pub fn Diagnostic::to_json(Self) -> @json.Json
 pub fn Diagnostic::to_repr(Self) -> @debug.Repr
@@ -301,7 +301,7 @@ pub(all) struct Geometry {
 pub fn Geometry::bounds(Self) -> Bounds?
 pub fn Geometry::coordinate_count(Self) -> Int32
 pub fn Geometry::equal(Self, Self) -> Bool
-pub fn Geometry::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Geometry::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Geometry::not_equal(Self, Self) -> Bool
 pub fn Geometry::point(Double, Double) -> Self
 pub fn Geometry::to_geojson(Self) -> @json.Json raise FgbError
@@ -323,7 +323,7 @@ pub(all) enum GeometryKind {
 }
 pub fn GeometryKind::code(Self) -> Int32
 pub fn GeometryKind::equal(Self, Self) -> Bool
-pub fn GeometryKind::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn GeometryKind::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn GeometryKind::name(Self) -> String
 pub fn GeometryKind::not_equal(Self, Self) -> Bool
 pub fn GeometryKind::to_json(Self) -> @json.Json
@@ -344,7 +344,7 @@ pub(all) struct Header {
 }
 pub fn Header::column(Self, String) -> Column?
 pub fn Header::equal(Self, Self) -> Bool
-pub fn Header::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Header::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Header::is_wgs84(Self) -> Bool
 pub fn Header::new(GeometryKind, Array[Column]) -> Self
 pub fn Header::not_equal(Self, Self) -> Bool
@@ -358,7 +358,7 @@ pub(all) struct IndexHit {
   offset : Int32
 }
 pub fn IndexHit::equal(Self, Self) -> Bool
-pub fn IndexHit::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn IndexHit::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn IndexHit::not_equal(Self, Self) -> Bool
 pub fn IndexHit::to_json(Self) -> @json.Json
 pub fn IndexHit::to_repr(Self) -> @debug.Repr
@@ -369,7 +369,7 @@ pub(all) struct IndexLevel {
   end : Int32
 }
 pub fn IndexLevel::equal(Self, Self) -> Bool
-pub fn IndexLevel::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn IndexLevel::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn IndexLevel::not_equal(Self, Self) -> Bool
 pub fn IndexLevel::to_json(Self) -> @json.Json
 pub fn IndexLevel::to_repr(Self) -> @debug.Repr
@@ -380,7 +380,7 @@ pub(all) struct IndexNode {
   offset : Int32
 }
 pub fn IndexNode::equal(Self, Self) -> Bool
-pub fn IndexNode::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn IndexNode::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn IndexNode::not_equal(Self, Self) -> Bool
 pub fn IndexNode::to_json(Self) -> @json.Json
 pub fn IndexNode::to_repr(Self) -> @debug.Repr
@@ -400,7 +400,7 @@ pub(all) struct Limits {
 }
 pub fn Limits::default() -> Self
 pub fn Limits::equal(Self, Self) -> Bool
-pub fn Limits::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn Limits::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn Limits::not_equal(Self, Self) -> Bool
 pub fn Limits::to_json(Self) -> @json.Json
 pub fn Limits::to_repr(Self) -> @debug.Repr
@@ -421,7 +421,7 @@ pub(all) struct NativeColumn {
   metadata : String?
 }
 pub fn NativeColumn::equal(Self, Self) -> Bool
-pub fn NativeColumn::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NativeColumn::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn NativeColumn::new(String, Int32) -> Self
 pub fn NativeColumn::not_equal(Self, Self) -> Bool
 pub fn NativeColumn::to_json(Self) -> @json.Json
@@ -438,7 +438,7 @@ pub(all) struct NativeCrs {
 }
 pub fn NativeCrs::epsg(Int32) -> Self
 pub fn NativeCrs::equal(Self, Self) -> Bool
-pub fn NativeCrs::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NativeCrs::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn NativeCrs::not_equal(Self, Self) -> Bool
 pub fn NativeCrs::to_json(Self) -> @json.Json
 pub fn NativeCrs::to_repr(Self) -> @debug.Repr
@@ -489,7 +489,7 @@ pub(all) struct NativeGeometry {
 }
 pub fn NativeGeometry::bounds(Self) -> Bounds?
 pub fn NativeGeometry::equal(Self, Self) -> Bool
-pub fn NativeGeometry::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NativeGeometry::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn NativeGeometry::new(Int32) -> Self
 pub fn NativeGeometry::not_equal(Self, Self) -> Bool
 pub fn NativeGeometry::point(Double, Double) -> Self
@@ -515,7 +515,7 @@ pub(all) struct NativeHeader {
   metadata : String?
 }
 pub fn NativeHeader::equal(Self, Self) -> Bool
-pub fn NativeHeader::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn NativeHeader::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn NativeHeader::new(Int32) -> Self
 pub fn NativeHeader::not_equal(Self, Self) -> Bool
 pub fn NativeHeader::to_json(Self) -> @json.Json
@@ -699,7 +699,7 @@ pub(all) struct SchemaDifference {
   message : String
 }
 pub fn SchemaDifference::equal(Self, Self) -> Bool
-pub fn SchemaDifference::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn SchemaDifference::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn SchemaDifference::not_equal(Self, Self) -> Bool
 pub fn SchemaDifference::to_json(Self) -> @json.Json
 pub fn SchemaDifference::to_repr(Self) -> @debug.Repr
@@ -764,7 +764,7 @@ pub(all) struct TransferStats {
   matched : Int32
 }
 pub fn TransferStats::equal(Self, Self) -> Bool
-pub fn TransferStats::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn TransferStats::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn TransferStats::not_equal(Self, Self) -> Bool
 pub fn TransferStats::to_json(Self) -> @json.Json
 pub fn TransferStats::to_repr(Self) -> @debug.Repr
@@ -777,7 +777,7 @@ pub(all) struct ValidationReport {
   truncated : Bool
 }
 pub fn ValidationReport::equal(Self, Self) -> Bool
-pub fn ValidationReport::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn ValidationReport::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn ValidationReport::not_equal(Self, Self) -> Bool
 pub fn ValidationReport::to_json(Self) -> @json.Json
 pub fn ValidationReport::to_repr(Self) -> @debug.Repr
@@ -789,7 +789,7 @@ pub(all) struct WriteOptions {
 }
 pub fn WriteOptions::default() -> Self
 pub fn WriteOptions::equal(Self, Self) -> Bool
-pub fn WriteOptions::from_json(@json.Json, @json.JsonPath) -> Self raise @json.JsonDecodeError
+pub fn WriteOptions::from_json(@json.Json, @json.DecodeContext) -> Self raise @json.JsonDecodeError
 pub fn WriteOptions::not_equal(Self, Self) -> Bool
 pub fn WriteOptions::to_json(Self) -> @json.Json
 pub fn WriteOptions::to_repr(Self) -> @debug.Repr
